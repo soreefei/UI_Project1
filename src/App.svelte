@@ -187,15 +187,7 @@
 
 <main class="app-shell">
   <header class="topbar">
-    <div class="brand-lockup">
-      <span class="brand-mark">SP</span>
-      <div><strong>SMART PIANO</strong><span>SMART GRAND PIANO</span></div>
-    </div>
-    <div class="topbar-meta">
-      <span class="live-dot"></span> SYSTEM ONLINE
-      <span class="meta-divider"></span>
-      {scenario.detail}
-    </div>
+    <h1 class="topbar-title">Smart Piano</h1>
     <button class="text-button" onclick={() => (showInfo = true)}
       >How it works <span>i</span></button
     >
@@ -375,116 +367,104 @@
           <div class="page-gesture">Swipe or use arrows to turn</div>
         </div>
       </div>
-
-      <div class="piano-body">
-        <div class="piano-lid"></div>
-        <div class="piano-keys">
-          {#each Array(24) as _, i}<span
-              class:raised={i % 3 === 1 || i % 3 === 2}
-            ></span>{/each}
-        </div>
-        <div class="piano-legs"><i></i><i></i><i></i></div>
-      </div>
-      <div class="stage-caption">
-        <span>MAIN DISPLAY REPLACES PHYSICAL SHEET MUSIC</span><span
-          >PLACED ON THE MUSIC DESK OF THE GRAND PIANO</span
-        >
-      </div>
     </section>
 
     <aside
       class="control-deck phone-extension"
       aria-label="Testing UI and companion song picker"
     >
-      <div class="deck-header">
-        <div>
-          <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
-          <h2>Smart Piano app</h2>
+      <div class="phone-screen">
+        <div class="deck-header">
+          <div>
+            <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
+            <h2>Smart Piano app</h2>
+          </div>
+          <span class="device-chip">CONNECTED</span>
         </div>
-        <span class="device-chip">CONNECTED</span>
-      </div>
-      <p class="deck-description">
-        Place your phone in the dock and choose a piece here. Your selection
-        loads onto the main music display instantly.
-      </p>
-      <div class="song-list">
-        {#each songs as item, index}<button
-            class:selected={selectedSong === index}
-            class="song-item"
-            onclick={() => selectSong(index)}
-            ><span class="song-number">0{index + 1}</span><span
-              class="song-copy"
-              ><strong>{item.title}</strong><small
-                >{item.composer} · {item.level}</small
-              ></span
-            ><span class="song-arrow">→</span></button
-          >{/each}
-      </div>
-      <div class="deck-section">
-        <div class="section-label">
-          <span>PLAYBACK SIMULATOR</span><span class="mini-status"
-            >{lastAction}</span
-          >
-        </div>
-        <button
-          class:playing={isPlaying}
-          class="play-control"
-          onclick={togglePlay}
-          ><span class="play-symbol">{isPlaying ? "Ⅱ" : "▶"}</span><span
-            ><strong
-              >{isPlaying ? "Pause listening" : "Simulate playing"}</strong
-            ><small
-              >{isPlaying
-                ? "Audio notes are moving the score"
-                : "Test audio-synchronized page turns"}</small
-            ></span
-          ><span class="control-chevron">{isPlaying ? "■" : "01"}</span></button
-        >
-      </div>
-      <div class="deck-section">
-        <div class="section-label">
-          <span>ANNOTATION TOOLS</span><span>{annotations.length} marks</span>
-        </div>
-        <div class="annotation-tools">
-          <button class:active={annotationMode} onclick={toggleAnnotation}
-            >✎ <span>Stylus</span></button
-          ><button onclick={() => addAnnotation("Circle")}
-            >◯ <span>Circle</span></button
-          ><button onclick={() => addAnnotation("Star")}
-            >★ <span>Star</span></button
-          ><button onclick={() => addAnnotation("Line")}
-            >— <span>Line</span></button
-          >
-        </div>
-      </div>
-      <div class="deck-section scenarios">
-        <div class="section-label">
-          <span>USER SCENARIOS</span><span>OPTION 3 / DATA</span>
-        </div>
-        <div class="scenario-grid">
-          {#each scenarios as item, index}<button
-              class:selected={selectedScenario === index}
-              onclick={() => selectScenario(index)}
-              ><span class="scenario-avatar">{item.player[0]}</span><span
-                ><strong>{item.name}</strong><small
-                  >{item.player} · {item.tempo} BPM</small
+        <p class="deck-description">
+          Place your phone in the dock and choose a piece here. Your selection
+          loads onto the main music display instantly.
+        </p>
+        <div class="song-list">
+          {#each songs as item, index}<button
+              class:selected={selectedSong === index}
+              class="song-item"
+              onclick={() => selectSong(index)}
+              ><span class="song-number">0{index + 1}</span><span
+                class="song-copy"
+                ><strong>{item.title}</strong><small
+                  >{item.composer} · {item.level}</small
                 ></span
-              ></button
+              ><span class="song-arrow">→</span></button
             >{/each}
         </div>
-      </div>
-      <div class="scenario-readout">
-        <div class="readout-top">
-          <span>NOW PLAYING AS</span><strong>{scenario.player}</strong><span
-            class="bpm">{scenario.tempo} <small>BPM</small></span
+        <div class="deck-section">
+          <div class="section-label">
+            <span>PLAYBACK SIMULATOR</span><span class="mini-status"
+              >{lastAction}</span
+            >
+          </div>
+          <button
+            class:playing={isPlaying}
+            class="play-control"
+            onclick={togglePlay}
+            ><span class="play-symbol">{isPlaying ? "Ⅱ" : "▶"}</span><span
+              ><strong
+                >{isPlaying ? "Pause listening" : "Simulate playing"}</strong
+              ><small
+                >{isPlaying
+                  ? "Audio notes are moving the score"
+                  : "Test audio-synchronized page turns"}</small
+              ></span
+            ><span class="control-chevron">{isPlaying ? "■" : "01"}</span
+            ></button
           >
         </div>
-        <p>{scenario.note}</p>
+        <div class="deck-section">
+          <div class="section-label">
+            <span>ANNOTATION TOOLS</span><span>{annotations.length} marks</span>
+          </div>
+          <div class="annotation-tools">
+            <button class:active={annotationMode} onclick={toggleAnnotation}
+              >✎ <span>Stylus</span></button
+            ><button onclick={() => addAnnotation("Circle")}
+              >◯ <span>Circle</span></button
+            ><button onclick={() => addAnnotation("Star")}
+              >★ <span>Star</span></button
+            ><button onclick={() => addAnnotation("Line")}
+              >— <span>Line</span></button
+            >
+          </div>
+        </div>
+        <div class="deck-section scenarios">
+          <div class="section-label">
+            <span>USER SCENARIOS</span><span>OPTION 3 / DATA</span>
+          </div>
+          <div class="scenario-grid">
+            {#each scenarios as item, index}<button
+                class:selected={selectedScenario === index}
+                onclick={() => selectScenario(index)}
+                ><span class="scenario-avatar">{item.player[0]}</span><span
+                  ><strong>{item.name}</strong><small
+                    >{item.player} · {item.tempo} BPM</small
+                  ></span
+                ></button
+              >{/each}
+          </div>
+        </div>
+        <div class="scenario-readout">
+          <div class="readout-top">
+            <span>NOW PLAYING AS</span><strong>{scenario.player}</strong><span
+              class="bpm">{scenario.tempo} <small>BPM</small></span
+            >
+          </div>
+          <p>{scenario.note}</p>
+        </div>
+        <button class="documentation-button" onclick={() => (showDocs = true)}
+          ><span>↗</span> View project documentation
+          <small>Design notes, requirements & process</small></button
+        >
       </div>
-      <button class="documentation-button" onclick={() => (showDocs = true)}
-        ><span>↗</span> View project documentation
-        <small>Design notes, requirements & process</small></button
-      >
     </aside>
   </div>
 

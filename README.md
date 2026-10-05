@@ -1,6 +1,6 @@
-# Svelte + Vite
+# Smart Piano
 
-This template should help get you started developing with Svelte in Vite.
+Smart Piano is a Svelte and JavaScript prototype for a smart grand piano. It begins with a front-view physical feature map, then moves into the interactive interface for the digital music desk and phone extension.
 
 ## Recommended IDE Setup
 
@@ -59,12 +59,32 @@ The envisioned sensing features are feasible assumptions: a microphone or pickup
 ## Run locally
 
 ```bash
+## Physical feature map
+
+The opening section is designed to sit beside a front-view photograph or hybrid sketch of the piano. Its numbered points describe the features to color-code in the final image:
+
+1. **Main music display:** Replaces loose sheet music on the music desk and shows score, page, tempo, and feedback.
+2. **Phone extension dock:** Holds the pianist's phone to the right of the main display. The mobile app is dedicated to browsing and selecting songs so the score stays uncluttered.
+3. **Audio sensing system:** A microphone or pickup under the music desk or near the soundboard detects notes and tempo for score synchronization.
+
+## Interactive prototype
+
+- **Main display:** Manual page controls, audio-sync state, auto-flip toggle, sync confidence, and digital score.
+- **Phone extension:** Four songs can be selected on the smaller portrait-oriented interface and loaded into the main display.
+- **Stylus annotation:** Stylus, circle, star, and line controls add visible marks to the score.
+- **User scenarios:** Evening practice, lesson mode, performance run, and sight reading show different tempos, progress, confidence, and coaching feedback.
+- **Project information:** The info button explains the controls. The documentation button covers assumptions, user needs, smart features, implemented options, and future work.
+
+## Run locally
+
+```bash
 npm install
 npm run dev
-````
+```
 
-Create a production build with `npm run build`. Replace the placeholder GitHub and portfolio URLs in `src/App.svelte` when the project is published.
+Create a production build with `npm run build`.
 
 ## AI documentation
 
 AI was used to help scaffold the Svelte interaction model, refine the visual hierarchy, and check the implementation against the project requirements. The interface concept, smart-object choice, interaction goals, and final design decisions belong to the project author.
+````

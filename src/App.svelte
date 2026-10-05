@@ -1,4 +1,6 @@
 <script>
+  import pianoImage from "../outline-of-a-piano-with-a-chair-from-black-lines-isolated-on-a-white-background-front-view-vector-illustration-2R5HHD9.jpg";
+
   const songs = [
     {
       title: "Clair de lune",
@@ -69,6 +71,37 @@
     },
   ];
 
+  const features = [
+    {
+      number: 1,
+      name: "Main music display",
+      location: "Music desk / sheet music position",
+      description:
+        "A wide, glare-controlled display replaces loose sheet music. It shows the score, current page, tempo, and visual feedback while keeping the pianist's sightline centered above the keys.",
+    },
+    {
+      number: 2,
+      name: "Phone extension dock",
+      location: "Right side of the music desk",
+      description:
+        "A smaller dock holds the pianist's phone in portrait orientation. The Smart Piano mobile app is dedicated to browsing, searching, and selecting music so the main score stays uncluttered.",
+    },
+    {
+      number: 3,
+      name: "Audio sensing system",
+      location: "Under the music desk / near the soundboard",
+      description:
+        "A microphone or pickup listens for played notes and tempo. The system uses that input to estimate score position and decide when an automatic page turn is safe.",
+    },
+    {
+      number: 4,
+      name: "Annotation stylus",
+      location: "Stored beside the main display",
+      description:
+        "A pressure-sensitive stylus lets the pianist circle notes, add reminders, and mark passages directly on the digital score without reaching for paper or a separate tablet.",
+    },
+  ];
+
   let selectedSong = 0;
   let selectedScenario = 0;
   let currentPage = 1;
@@ -77,6 +110,14 @@
   let showInfo = false;
   let showDocs = false;
   let annotationMode = false;
+  let selectedFeature = 1;
+  /** @type {Record<number, {x: number, y: number}>} */
+  let featurePositions = {
+    1: { x: 49.5, y: 29 },
+    2: { x: 69, y: 54 },
+    3: { x: 62, y: 29 },
+    4: { x: 30, y: 54 },
+  };
   /** @type {string[]} */
   let annotations = [];
   let lastAction = "Ready when you are";
@@ -129,10 +170,15 @@
     annotations = [...annotations, type];
     lastAction = `${type} mark added to page ${currentPage}`;
   }
+
+  /** @param {number} number */
+  function selectFeature(number) {
+    selectedFeature = number;
+  }
 </script>
 
 <svelte:head>
-  <title>Resonance | Smart Grand Piano</title>
+  <title>Smart Piano | Interactive Grand Piano Prototype</title>
   <meta
     name="description"
     content="A smart grand piano interface prototype with synchronized sheet music and companion song picker."
@@ -142,8 +188,8 @@
 <main class="app-shell">
   <header class="topbar">
     <div class="brand-lockup">
-      <span class="brand-mark">R</span>
-      <div><strong>RESONANCE</strong><span>SMART GRAND PIANO</span></div>
+      <span class="brand-mark">SP</span>
+      <div><strong>SMART PIANO</strong><span>SMART GRAND PIANO</span></div>
     </div>
     <div class="topbar-meta">
       <span class="live-dot"></span> SYSTEM ONLINE
@@ -154,6 +200,74 @@
       >How it works <span>i</span></button
     >
   </header>
+
+  <section class="object-overview" aria-labelledby="overview-title">
+    <div class="overview-copy">
+      <p class="eyebrow">PHYSICAL OBJECT / FEATURE MAP</p>
+      <h1 id="overview-title">Smart Piano</h1>
+      <p class="overview-lede">
+        A grand piano that keeps the pianist in the music. The physical
+        instrument stays familiar while digital tools quietly extend the music
+        desk, the soundboard, and the pianist's workflow.
+      </p>
+      <div class="overview-rule"></div>
+      <p class="overview-note">
+        Drag each numbered point to the feature's location on the piano. Select
+        a feature in the list to read its design description.
+      </p>
+      <div class="feature-list">
+        {#each features as feature}
+          <button
+            class:selected={selectedFeature === feature.number}
+            class="feature-card"
+            onclick={() => selectFeature(feature.number)}
+          >
+            <span class="feature-number">0{feature.number}</span>
+            <span class="feature-card-copy"
+              ><strong>{feature.name}</strong><small>{feature.location}</small
+              ></span
+            >
+            <span class="feature-card-arrow"
+              >{selectedFeature === feature.number ? "—" : "→"}</span
+            >
+          </button>
+        {/each}
+      </div>
+    </div>
+    <div
+      class="piano-map"
+      aria-label="Front-view grand piano image with feature markers"
+    >
+      <img
+        class="piano-image"
+        src={pianoImage}
+        alt="Front view of a grand piano"
+      />
+      {#each features as feature}
+        <button
+          class:active={selectedFeature === feature.number}
+          class="map-point"
+          style={`left: ${featurePositions[feature.number].x}%; top: ${featurePositions[feature.number].y}%;`}
+          aria-label={`Select ${feature.name}`}
+          onclick={() => selectFeature(feature.number)}>{feature.number}</button
+        >
+      {/each}
+      <div class="map-selected">
+        <span class="map-selected-number">0{selectedFeature}</span>
+        <div>
+          <strong>{features[selectedFeature - 1].name}</strong><small
+            >{features[selectedFeature - 1].description}</small
+          >
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="prototype-divider">
+    <span>INTERACTIVE PROTOTYPE</span><span
+      >Scroll to explore the interface</span
+    >
+  </div>
 
   <div class="workspace">
     <section class="device-stage" aria-label="Smart grand piano device">
@@ -246,7 +360,7 @@
               Stylus ready · tap a mark below to place it
             </div>{/if}
           <div class="paper-footer">
-            <span>RESONANCE DIGITAL EDITION</span><span>4 / 4</span>
+            <span>SMART PIANO DIGITAL EDITION</span><span>4 / 4</span>
           </div>
         </div>
         <div class="display-footer">
@@ -279,19 +393,19 @@
     </section>
 
     <aside
-      class="control-deck"
+      class="control-deck phone-extension"
       aria-label="Testing UI and companion song picker"
     >
       <div class="deck-header">
         <div>
-          <p class="eyebrow">TESTING UI / COMPANION DISPLAY</p>
-          <h2>Song library</h2>
+          <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
+          <h2>Smart Piano app</h2>
         </div>
         <span class="device-chip">CONNECTED</span>
       </div>
       <p class="deck-description">
-        Choose a piece on the small display. It loads onto the main music desk
-        instantly.
+        Place your phone in the dock and choose a piece here. Your selection
+        loads onto the main music display instantly.
       </p>
       <div class="song-list">
         {#each songs as item, index}<button
@@ -377,7 +491,7 @@
   <footer class="app-footer">
     <span>PROJECT 01 · INTERFACE TO A SMART OBJECT</span><span
       >EVAN SOREEFAN · 2026</span
-    ><span>RESONANCE / v0.4</span>
+    ><span>SMART PIANO / v0.4</span>
   </footer>
 </main>
 
@@ -412,7 +526,7 @@
       </div>
       <div class="guide-row">
         <span>02</span><strong>Start listening</strong><small
-          >Resonance follows the pianist's notes and advances the score.</small
+          >Smart Piano follows the pianist's notes and advances the score.</small
         >
       </div>
       <div class="guide-row">
@@ -440,7 +554,7 @@
         onclick={() => (showDocs = false)}>×</button
       >
       <p class="eyebrow">PROJECT DOCUMENTATION</p>
-      <h2 id="docs-title">Resonance / Design notes</h2>
+      <h2 id="docs-title">Smart Piano / Design notes</h2>
       <p class="docs-lede">
         A smart grand piano designed to make digital sheet music feel as
         immediate as the instrument itself.

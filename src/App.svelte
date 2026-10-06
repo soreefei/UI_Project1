@@ -1,5 +1,6 @@
 <script>
   import pianoImage from "../outline-of-a-piano-with-a-chair-from-black-lines-isolated-on-a-white-background-front-view-vector-illustration-2R5HHD9.jpg";
+  import profileImage from "../professionalPFP.jpg";
 
   const songs = [
     {
@@ -192,6 +193,22 @@
       >How it works <span>i</span></button
     >
   </header>
+
+  <section class="portfolio-intro" aria-labelledby="portfolio-title">
+    <div class="portfolio-copy">
+      <p class="eyebrow">PORTFOLIO / PROJECT 01</p>
+      <h2 id="portfolio-title">Evan Soreefan</h2>
+      <p>
+        Hi, I'm Evan Soreefan, a Computer Science student from the University of
+        Cincinnati.
+      </p>
+    </div>
+    <img
+      class="profile-image"
+      src={profileImage}
+      alt="Portrait of Evan Soreefan"
+    />
+  </section>
 
   <section class="object-overview" aria-labelledby="overview-title">
     <div class="overview-copy">

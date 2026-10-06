@@ -1,6 +1,15 @@
 <script>
+  import { afterUpdate } from "svelte";
+  import * as pdfjsLib from "pdfjs-dist";
+  import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
   import pianoImage from "../outline-of-a-piano-with-a-chair-from-black-lines-isolated-on-a-white-background-front-view-vector-illustration-2R5HHD9.jpg";
   import profileImage from "../professionalPFP.jpg";
+  import clairDeLunePdf from "../clair-de-lune-claude-debussy.pdf";
+  import arabesquePdf from "../arabesque-l-66-no-1-in-e-major.pdf";
+  import gymnopediePdf from "../gymnopedie-no1-erik-satie-eric-satie-gymnopedie-nr1.pdf";
+  import preludePdf from "../prelude-i-in-c-major-bwv-846-well-tempered-clavier-first-book.pdf";
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
   const songs = [
     {
@@ -9,6 +18,7 @@
       level: "Intermediate",
       pages: 4,
       mood: "Nocturne",
+      pdf: clairDeLunePdf,
     },
     {
       title: "Gymnopedie No. 1",
@@ -16,6 +26,7 @@
       level: "Beginner",
       pages: 2,
       mood: "Minimal",
+      pdf: gymnopediePdf,
     },
     {
       title: "Prelude in C Major",
@@ -23,6 +34,7 @@
       level: "Intermediate",
       pages: 3,
       mood: "Baroque",
+      pdf: preludePdf,
     },
     {
       title: "Arabesque No. 1",
@@ -30,6 +42,7 @@
       level: "Advanced",
       pages: 5,
       mood: "Impressionist",
+      pdf: arabesquePdf,
     },
   ];
 
@@ -82,17 +95,17 @@
     },
     {
       number: 2,
-      name: "Phone extension dock",
-      location: "Right side of the music desk",
-      description:
-        "A smaller dock holds the pianist's phone in portrait orientation. The Smart Piano mobile app is dedicated to browsing, searching, and selecting music so the main score stays uncluttered.",
-    },
-    {
-      number: 3,
       name: "Audio sensing system",
       location: "Under the music desk / near the soundboard",
       description:
         "A microphone or pickup listens for played notes and tempo. The system uses that input to estimate score position and decide when an automatic page turn is safe.",
+    },
+    {
+      number: 3,
+      name: "Phone extension dock",
+      location: "Right side of the music desk",
+      description:
+        "A smaller dock holds the pianist's phone in portrait orientation. The Smart Piano mobile app is dedicated to browsing, searching, and selecting music so the main score stays uncluttered.",
     },
     {
       number: 4,
@@ -108,15 +121,29 @@
   let currentPage = 1;
   let isPlaying = false;
   let isAutoFlip = true;
-  let showInfo = false;
   let showDocs = false;
   let annotationMode = false;
+  let isEraser = false;
   let selectedFeature = 1;
+  /** @type {HTMLCanvasElement | undefined} */
+  let drawingCanvas;
+  /** @type {HTMLCanvasElement | undefined} */
+  let pdfCanvas;
+  /** @type {HTMLDivElement | undefined} */
+  let pageLayer;
+  let lastRenderedPdf = "";
+  let isDrawing = false;
+  /** @type {{x: number, y: number}[][]} */
+  let strokes = [];
+  /** @type {{strokes: {x: number, y: number}[][], annotations: string[]}[]} */
+  let undoStack = [];
+  /** @type {{strokes: {x: number, y: number}[][], annotations: string[]}[]} */
+  let redoStack = [];
   /** @type {Record<number, {x: number, y: number}>} */
   let featurePositions = {
     1: { x: 49.5, y: 29 },
-    2: { x: 69, y: 54 },
-    3: { x: 62, y: 29 },
+    2: { x: 62, y: 29 },
+    3: { x: 69, y: 54 },
     4: { x: 30, y: 54 },
   };
   /** @type {string[]} */
@@ -125,6 +152,7 @@
 
   $: song = songs[selectedSong];
   $: scenario = scenarios[selectedScenario];
+  $: annotationCount = annotations.length + strokes.length;
   $: progress = Math.min(
     100,
     Math.round(
@@ -137,6 +165,11 @@
     selectedSong = index;
     currentPage = 1;
     isPlaying = false;
+    strokes = [];
+    annotations = [];
+    undoStack = [];
+    redoStack = [];
+    redrawStrokes();
     lastAction = `${songs[index].title} loaded on the music display`;
   }
 
@@ -156,11 +189,16 @@
   /** @param {number} direction */
   function flipPage(direction) {
     currentPage = Math.max(1, Math.min(song.pages, currentPage + direction));
+    strokes = [];
+    undoStack = [];
+    redoStack = [];
+    redrawStrokes();
     lastAction = direction > 0 ? "Page turned forward" : "Page turned back";
   }
 
   function toggleAnnotation() {
     annotationMode = !annotationMode;
+    if (!annotationMode) isEraser = false;
     lastAction = annotationMode
       ? "Stylus annotation mode on"
       : "Annotation saved";
@@ -168,9 +206,189 @@
 
   /** @param {string} type */
   function addAnnotation(type) {
+    saveAnnotationHistory();
     annotations = [...annotations, type];
     lastAction = `${type} mark added to page ${currentPage}`;
   }
+
+  function saveAnnotationHistory() {
+    undoStack = [
+      ...undoStack,
+      {
+        strokes: strokes.map((stroke) => stroke.map((point) => ({ ...point }))),
+        annotations: [...annotations],
+      },
+    ];
+    redoStack = [];
+  }
+
+  /** @param {{strokes: {x: number, y: number}[][], annotations: string[]}} state */
+  function restoreAnnotationState(state) {
+    strokes = state.strokes.map((stroke) =>
+      stroke.map((point) => ({ ...point })),
+    );
+    annotations = [...state.annotations];
+    redrawStrokes();
+  }
+
+  function undoAnnotation() {
+    if (undoStack.length === 0) return;
+    const currentState = {
+      strokes: strokes.map((stroke) => stroke.map((point) => ({ ...point }))),
+      annotations: [...annotations],
+    };
+    redoStack = [...redoStack, currentState];
+    const previousState = undoStack[undoStack.length - 1];
+    undoStack = undoStack.slice(0, -1);
+    restoreAnnotationState(previousState);
+    lastAction = "Annotation undone";
+  }
+
+  function redoAnnotation() {
+    if (redoStack.length === 0) return;
+    const currentState = {
+      strokes: strokes.map((stroke) => stroke.map((point) => ({ ...point }))),
+      annotations: [...annotations],
+    };
+    undoStack = [...undoStack, currentState];
+    const nextState = redoStack[redoStack.length - 1];
+    redoStack = redoStack.slice(0, -1);
+    restoreAnnotationState(nextState);
+    lastAction = "Annotation redone";
+  }
+
+  function toggleEraser() {
+    annotationMode = true;
+    isEraser = !isEraser;
+    lastAction = isEraser ? "Eraser mode on" : "Drawing mode on";
+  }
+
+  function resizeDrawingCanvas() {
+    if (!drawingCanvas) return;
+    const bounds = drawingCanvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.round(bounds.width * ratio);
+    const height = Math.round(bounds.height * ratio);
+    if (drawingCanvas.width === width && drawingCanvas.height === height)
+      return;
+    drawingCanvas.width = width;
+    drawingCanvas.height = height;
+    redrawStrokes();
+  }
+
+  /** @param {PointerEvent} event */
+  function getDrawingPoint(event) {
+    const canvas = drawingCanvas;
+    if (!canvas) return { x: 0, y: 0 };
+    const bounds = canvas.getBoundingClientRect();
+    return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+  }
+
+  function redrawStrokes() {
+    if (!drawingCanvas) return;
+    const context = drawingCanvas.getContext("2d");
+    if (!context) return;
+    const bounds = drawingCanvas.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    context.clearRect(0, 0, bounds.width, bounds.height);
+    context.strokeStyle = "#bd4f43";
+    context.lineWidth = 3;
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    for (const stroke of strokes) {
+      if (stroke.length < 2) continue;
+      context.beginPath();
+      context.moveTo(stroke[0].x, stroke[0].y);
+      for (const point of stroke.slice(1)) context.lineTo(point.x, point.y);
+      context.stroke();
+    }
+  }
+
+  /** @param {PointerEvent} event */
+  function startDrawing(event) {
+    if (!annotationMode || !drawingCanvas) return;
+    resizeDrawingCanvas();
+    saveAnnotationHistory();
+    isDrawing = true;
+    drawingCanvas.setPointerCapture(event.pointerId);
+    if (isEraser) {
+      eraseAt(getDrawingPoint(event));
+    } else {
+      strokes = [...strokes, [getDrawingPoint(event)]];
+    }
+    event.preventDefault();
+  }
+
+  /** @param {PointerEvent} event */
+  function draw(event) {
+    if (!isDrawing) return;
+    if (isEraser) {
+      eraseAt(getDrawingPoint(event));
+      event.preventDefault();
+      return;
+    }
+    const currentStroke = strokes[strokes.length - 1];
+    strokes = [
+      ...strokes.slice(0, -1),
+      [...currentStroke, getDrawingPoint(event)],
+    ];
+    redrawStrokes();
+    event.preventDefault();
+  }
+
+  /** @param {{x: number, y: number}} point */
+  function eraseAt(point) {
+    const radius = 18;
+    strokes = strokes.filter(
+      (stroke) =>
+        !stroke.some(
+          (strokePoint) =>
+            Math.hypot(strokePoint.x - point.x, strokePoint.y - point.y) <=
+            radius,
+        ),
+    );
+    redrawStrokes();
+  }
+
+  function stopDrawing() {
+    isDrawing = false;
+  }
+
+  /** @param {string} pdfUrl @param {number} pageNumber */
+  async function renderPdfPage(pdfUrl, pageNumber) {
+    if (!pdfCanvas || !pageLayer) return;
+    const pdf = await pdfjsLib.getDocument({ url: pdfUrl }).promise;
+    const page = await pdf.getPage(pageNumber);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const scale = pageLayer.clientWidth / baseViewport.width;
+    const viewport = page.getViewport({ scale });
+    const ratio = window.devicePixelRatio || 1;
+
+    pageLayer.style.height = `${viewport.height}px`;
+    pdfCanvas.width = Math.round(viewport.width * ratio);
+    pdfCanvas.height = Math.round(viewport.height * ratio);
+    pdfCanvas.style.width = `${viewport.width}px`;
+    pdfCanvas.style.height = `${viewport.height}px`;
+
+    const context = pdfCanvas.getContext("2d");
+    if (!context) return;
+    await page.render({
+      canvas: pdfCanvas,
+      canvasContext: context,
+      viewport,
+      transform: ratio === 1 ? undefined : [ratio, 0, 0, ratio, 0, 0],
+    }).promise;
+    resizeDrawingCanvas();
+  }
+
+  afterUpdate(() => {
+    const pdfKey = `${song.pdf}-${currentPage}`;
+    if (pdfCanvas && pageLayer && pdfKey !== lastRenderedPdf) {
+      lastRenderedPdf = pdfKey;
+      renderPdfPage(song.pdf, currentPage);
+    }
+  });
 
   /** @param {number} number */
   function selectFeature(number) {
@@ -189,9 +407,6 @@
 <main class="app-shell">
   <header class="topbar">
     <h1 class="topbar-title">Smart Piano</h1>
-    <button class="text-button" onclick={() => (showInfo = true)}
-      >How it works <span>i</span></button
-    >
   </header>
 
   <section class="portfolio-intro" aria-labelledby="portfolio-title">
@@ -199,8 +414,13 @@
       <p class="eyebrow">PORTFOLIO / PROJECT 01</p>
       <h2 id="portfolio-title">Evan Soreefan</h2>
       <p>
-        Hi, I'm Evan Soreefan, a Computer Science student from the University of
-        Cincinnati.
+        Hi, I'm Evan Soreefan, a fourth-year Computer Science student from the
+        University of Cincinnati.
+      </p>
+      <p class="portfolio-detail">
+        Most of my knowledge and expertise involve programming in C/C++ and
+        front-end development. I have been a co-op at Bilstein of America and
+        Siemens Digital Industries Software (two-time intern).
       </p>
     </div>
     <img
@@ -215,14 +435,9 @@
       <p class="eyebrow">PHYSICAL OBJECT / FEATURE MAP</p>
       <h1 id="overview-title">Smart Piano</h1>
       <p class="overview-lede">
-        A grand piano that keeps the pianist in the music. The physical
-        instrument stays familiar while digital tools quietly extend the music
-        desk, the soundboard, and the pianist's workflow.
-      </p>
-      <div class="overview-rule"></div>
-      <p class="overview-note">
-        Drag each numbered point to the feature's location on the piano. Select
-        a feature in the list to read its design description.
+        A piano that keeps the pianist in the music. The physical instrument
+        stays familiar while digital tools quietly extend the music desk, the
+        soundboard, and the pianist's workflow.
       </p>
       <div class="feature-list">
         {#each features as feature}
@@ -330,6 +545,24 @@
               onclick={toggleAnnotation}
               ><span class="pen-icon">✎</span> Annotate</button
             ><button
+              class:enabled={isEraser}
+              class="tool-button"
+              aria-label="Toggle eraser"
+              title="Toggle eraser"
+              onclick={toggleEraser}>⌫</button
+            ><button
+              class="tool-button"
+              aria-label="Undo annotation"
+              title="Undo annotation"
+              disabled={undoStack.length === 0}
+              onclick={undoAnnotation}>↶</button
+            ><button
+              class="tool-button"
+              aria-label="Redo annotation"
+              title="Redo annotation"
+              disabled={redoStack.length === 0}
+              onclick={redoAnnotation}>↷</button
+            ><button
               class="tool-button"
               onclick={() => (lastAction = "Display brightness adjusted")}
               >☼</button
@@ -345,20 +578,24 @@
           <div class="score-subtitle">
             {song.mood} · {song.level} arrangement
           </div>
-          <div class="staff-block">
-            <div class="clef">𝄞</div>
-            {#each [0, 1, 2, 3, 4] as line}
-              <div class="staff" style={`top: ${40 + line * 14}px`}></div>
-            {/each}
-            <div class="notes note-a">♪ ♫ ♩</div>
-            <div class="notes note-b">♩ ♩ ♪ ♫</div>
-            <div class="notes note-c">♫ ♩ ♪</div>
-            <div class="measure measure-one"></div>
-            <div class="measure measure-two"></div>
-            <div class="measure measure-three"></div>
-          </div>
-          <div class="lyric-line">
-            The score follows your hands. Your attention stays with the music.
+          <div class="sheet-layer">
+            <div class="pdf-page-layer" bind:this={pageLayer}>
+              <canvas
+                bind:this={pdfCanvas}
+                class="pdf-render"
+                aria-label={`${song.title} sheet music, page ${currentPage}`}
+              ></canvas>
+              <canvas
+                bind:this={drawingCanvas}
+                class:active={annotationMode}
+                class="drawing-canvas"
+                aria-label="Draw annotations over the sheet music"
+                onpointerdown={startDrawing}
+                onpointermove={draw}
+                onpointerup={stopDrawing}
+                onpointercancel={stopDrawing}
+              ></canvas>
+            </div>
           </div>
           {#if annotations.length > 0}<div class="annotation-pins">
               {#each annotations as mark}<span
@@ -439,17 +676,27 @@
         </div>
         <div class="deck-section">
           <div class="section-label">
-            <span>ANNOTATION TOOLS</span><span>{annotations.length} marks</span>
+            <span>ANNOTATION TOOLS</span><span>{annotationCount} marks</span>
           </div>
           <div class="annotation-tools">
             <button class:active={annotationMode} onclick={toggleAnnotation}
               >✎ <span>Stylus</span></button
+            ><button class:active={isEraser} onclick={toggleEraser}
+              >⌫ <span>Eraser</span></button
             ><button onclick={() => addAnnotation("Circle")}
               >◯ <span>Circle</span></button
             ><button onclick={() => addAnnotation("Star")}
               >★ <span>Star</span></button
             ><button onclick={() => addAnnotation("Line")}
               >— <span>Line</span></button
+            >
+          </div>
+          <div class="annotation-history">
+            <button disabled={undoStack.length === 0} onclick={undoAnnotation}
+              >↶ Undo</button
+            >
+            <button disabled={redoStack.length === 0} onclick={redoAnnotation}
+              >Redo ↷</button
             >
           </div>
         </div>
@@ -492,47 +739,6 @@
   </footer>
 </main>
 
-{#if showInfo}<div
-    class="modal-backdrop"
-    role="presentation"
-    onclick={(event) =>
-      event.target === event.currentTarget && (showInfo = false)}
-  >
-    <div
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="info-title"
-    >
-      <button
-        class="modal-close"
-        aria-label="Close"
-        onclick={() => (showInfo = false)}>×</button
-      >
-      <p class="eyebrow">INTERACTION GUIDE</p>
-      <h2 id="info-title">A piano that listens back.</h2>
-      <p>
-        The main display sits where sheet music normally lives. Choose a song on
-        the companion display, then simulate a performance to test
-        audio-synchronized page turns.
-      </p>
-      <div class="guide-row">
-        <span>01</span><strong>Pick a piece</strong><small
-          >Use the companion display on the right.</small
-        >
-      </div>
-      <div class="guide-row">
-        <span>02</span><strong>Start listening</strong><small
-          >Smart Piano follows the pianist's notes and advances the score.</small
-        >
-      </div>
-      <div class="guide-row">
-        <span>03</span><strong>Mark the score</strong><small
-          >Turn on Stylus mode and add circles, stars, or lines.</small
-        >
-      </div>
-    </div>
-  </div>{/if}
 {#if showDocs}<div
     class="modal-backdrop"
     role="presentation"

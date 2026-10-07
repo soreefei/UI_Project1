@@ -46,45 +46,6 @@
     },
   ];
 
-  const scenarios = [
-    {
-      name: "Evening practice",
-      player: "Maya",
-      detail: "Quiet room · 7:42 PM",
-      tempo: 72,
-      progress: 38,
-      confidence: 94,
-      note: "Relaxed phrasing detected. Keep the left hand light.",
-    },
-    {
-      name: "Lesson mode",
-      player: "Noah",
-      detail: "Teacher connected · 4:10 PM",
-      tempo: 84,
-      progress: 64,
-      confidence: 88,
-      note: "Two measures need another pass before moving on.",
-    },
-    {
-      name: "Performance run",
-      player: "Avery",
-      detail: "Concert hall · 10:15 AM",
-      tempo: 96,
-      progress: 82,
-      confidence: 97,
-      note: "Page turns are locked. Dynamics are performance-ready.",
-    },
-    {
-      name: "Sight reading",
-      player: "Jordan",
-      detail: "Studio · 2:26 PM",
-      tempo: 60,
-      progress: 21,
-      confidence: 76,
-      note: "Tempo is steady. The next page is ready when you are.",
-    },
-  ];
-
   const features = [
     {
       number: 1,
@@ -117,7 +78,6 @@
   ];
 
   let selectedSong = 0;
-  let selectedScenario = 0;
   let currentPage = 1;
   let isPlaying = false;
   let isAutoFlip = true;
@@ -152,13 +112,10 @@
   let lastAction = "Ready when you are";
 
   $: song = songs[selectedSong];
-  $: scenario = scenarios[selectedScenario];
   $: annotationCount = annotations.length + strokes.length;
   $: progress = Math.min(
     100,
-    Math.round(
-      ((currentPage - 1) / song.pages) * 100 + scenario.progress / song.pages,
-    ),
+    Math.round(((currentPage - 1) / song.pages) * 100 + 38 / song.pages),
   );
 
   /** @param {number} index */
@@ -172,12 +129,6 @@
     redoStack = [];
     redrawStrokes();
     lastAction = `${songs[index].title} loaded on the music display`;
-  }
-
-  /** @param {number} index */
-  function selectScenario(index) {
-    selectedScenario = index;
-    lastAction = `${scenarios[index].name} simulation loaded`;
   }
 
   function togglePlay() {
@@ -503,7 +454,7 @@
       <div class="stage-heading">
         <div>
           <p class="eyebrow">DEVICE UI / MAIN DISPLAY</p>
-          <h1>Play in the moment.</h1>
+          <h1>Main music display</h1>
         </div>
         <div class="stage-status">
           <span class:active={isPlaying} class="status-ring"></span><span
@@ -616,8 +567,7 @@
         </div>
         <div class="display-footer">
           <div>
-            <span class="footer-label">SYNC CONFIDENCE</span><strong
-              >{scenario.confidence}%</strong
+            <span class="footer-label">SYNC CONFIDENCE</span><strong>94%</strong
             >
           </div>
           <div class="progress-track">
@@ -636,7 +586,7 @@
         <div class="deck-header">
           <div>
             <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
-            <h2>Smart Piano app</h2>
+            <h2>Phone extension dock</h2>
           </div>
           <span class="device-chip">CONNECTED</span>
         </div>
@@ -704,30 +654,6 @@
               >Redo ↷</button
             >
           </div>
-        </div>
-        <div class="deck-section scenarios">
-          <div class="section-label">
-            <span>USER SCENARIOS</span><span>OPTION 3 / DATA</span>
-          </div>
-          <div class="scenario-grid">
-            {#each scenarios as item, index}<button
-                class:selected={selectedScenario === index}
-                onclick={() => selectScenario(index)}
-                ><span class="scenario-avatar">{item.player[0]}</span><span
-                  ><strong>{item.name}</strong><small
-                    >{item.player} · {item.tempo} BPM</small
-                  ></span
-                ></button
-              >{/each}
-          </div>
-        </div>
-        <div class="scenario-readout">
-          <div class="readout-top">
-            <span>NOW PLAYING AS</span><strong>{scenario.player}</strong><span
-              class="bpm">{scenario.tempo} <small>BPM</small></span
-            >
-          </div>
-          <p>{scenario.note}</p>
         </div>
         <button class="documentation-button" onclick={() => (showDocs = true)}
           ><span>↗</span> View project documentation
@@ -817,8 +743,8 @@
         <div>
           <span>IMPLEMENTED OPTIONS</span><strong>Complex input + data</strong>
           <p>
-            Song selection, stylus marks, playback simulation, four user
-            scenarios, and performance readouts.
+            Song selection, stylus marks, playback simulation, and sync
+            feedback.
           </p>
         </div>
       </div>

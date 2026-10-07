@@ -35,6 +35,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .phone-screen::-webkit-scrollbar { width: 6px; }
 .phone-screen::-webkit-scrollbar-track { background: #1a1918; border-radius: 8px; }
 .phone-screen::-webkit-scrollbar-thumb { background: #66564b; border-radius: 8px; }
+.phone-extension .deck-header { border: 0; border-radius: 0; }
+.phone-extension .phone-screen .deck-header { border: 0 !important; border-top: 0 !important; border-bottom: 0 !important; border-radius: 0 !important; }
+.phone-extension::before { display: none; }
 .overview-copy .feature-list { margin-top: 32px; }
 .overview-copy .feature-card-copy strong { font-size: 18px; }
 .overview-copy .feature-card-copy small { font-size: 11px; }

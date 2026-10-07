@@ -95,24 +95,24 @@
     },
     {
       number: 2,
-      name: "Audio sensing system",
-      location: "Under the music desk / near the soundboard",
-      description:
-        "A microphone or pickup listens for played notes and tempo. The system uses that input to estimate score position and decide when an automatic page turn is safe.",
-    },
-    {
-      number: 3,
       name: "Phone extension dock",
       location: "Right side of the music desk",
       description:
         "A smaller dock holds the pianist's phone in portrait orientation. The Smart Piano mobile app is dedicated to browsing, searching, and selecting music so the main score stays uncluttered.",
     },
     {
-      number: 4,
-      name: "Annotation stylus",
-      location: "Stored beside the main display",
+      number: 3,
+      name: "Button hub",
+      location: "Control strip below the main display",
       description:
-        "A pressure-sensitive stylus lets the pianist circle notes, add reminders, and mark passages directly on the digital score without reaching for paper or a separate tablet.",
+        "A compact physical control hub gives the pianist quick access to page turns, playback, annotation mode, and other frequently used actions without reaching into the digital score.",
+    },
+    {
+      number: 4,
+      name: "Pull-out coffee table",
+      location: "Lower front panel beneath the keyboard",
+      description:
+        "A concealed table slides out from beneath the keyboard to hold a coffee, water, or small personal item, giving the pianist a convenient surface without adding permanent bulk to the piano.",
     },
   ];
 
@@ -122,6 +122,7 @@
   let isPlaying = false;
   let isAutoFlip = true;
   let showDocs = false;
+  let showFeatureInfo = false;
   let annotationMode = false;
   let isEraser = false;
   let selectedFeature = 1;
@@ -142,8 +143,8 @@
   /** @type {Record<number, {x: number, y: number}>} */
   let featurePositions = {
     1: { x: 49.5, y: 29 },
-    2: { x: 62, y: 29 },
-    3: { x: 69, y: 54 },
+    2: { x: 69, y: 54 },
+    3: { x: 62, y: 29 },
     4: { x: 30, y: 54 },
   };
   /** @type {string[]} */
@@ -476,14 +477,18 @@
           onclick={() => selectFeature(feature.number)}>{feature.number}</button
         >
       {/each}
-      <div class="map-selected">
+      <button
+        class="map-selected"
+        aria-label={`Open details for ${features[selectedFeature - 1].name}`}
+        onclick={() => (showFeatureInfo = true)}
+      >
         <span class="map-selected-number">0{selectedFeature}</span>
         <div>
           <strong>{features[selectedFeature - 1].name}</strong><small
             >{features[selectedFeature - 1].description}</small
           >
         </div>
-      </div>
+      </button>
     </div>
   </section>
 
@@ -739,6 +744,31 @@
   </footer>
 </main>
 
+{#if showFeatureInfo}<div
+    class="modal-backdrop"
+    role="presentation"
+    onclick={(event) =>
+      event.target === event.currentTarget && (showFeatureInfo = false)}
+  >
+    <div
+      class="modal feature-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="feature-title"
+    >
+      <button
+        class="modal-close"
+        aria-label="Close feature details"
+        onclick={() => (showFeatureInfo = false)}>×</button
+      >
+      <p class="eyebrow">FEATURE 0{selectedFeature}</p>
+      <h2 id="feature-title">{features[selectedFeature - 1].name}</h2>
+      <p class="feature-location">{features[selectedFeature - 1].location}</p>
+      <p class="feature-description">
+        {features[selectedFeature - 1].description}
+      </p>
+    </div>
+  </div>{/if}
 {#if showDocs}<div
     class="modal-backdrop"
     role="presentation"

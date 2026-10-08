@@ -46,6 +46,53 @@
     },
   ];
 
+  const searchableScores = [
+    {
+      title: "Clair de lune",
+      composer: "Claude Debussy",
+      source: "Your library",
+      songIndex: 0,
+    },
+    {
+      title: "Gymnopedie No. 1",
+      composer: "Erik Satie",
+      source: "Your library",
+      songIndex: 1,
+    },
+    {
+      title: "Prelude in C Major",
+      composer: "J. S. Bach",
+      source: "Your library",
+      songIndex: 2,
+    },
+    {
+      title: "Arabesque No. 1",
+      composer: "Claude Debussy",
+      source: "Your library",
+      songIndex: 3,
+    },
+    {
+      title: "Piano Concerto No. 2",
+      composer: "Sergei Rachmaninov",
+      source: "Online catalog",
+    },
+    {
+      title: "Prelude in E Minor, Op. 28 No. 4",
+      composer: "Frederic Chopin",
+      source: "Online catalog",
+    },
+    {
+      title: "Liebestraum No. 3",
+      composer: "Franz Liszt",
+      source: "Online catalog",
+    },
+    {
+      title: "La Campanella",
+      composer: "Franz Liszt",
+      source: "Online catalog",
+    },
+  ];
+
   const features = [
     {
       number: 1,
@@ -81,7 +128,7 @@
   let currentPage = 1;
   let isPlaying = false;
   let isAutoFlip = true;
-  let showDocs = false;
+  let searchQuery = "";
   let showFeatureInfo = false;
   let annotationMode = false;
   let isEraser = false;
@@ -112,6 +159,12 @@
   let lastAction = "Ready when you are";
 
   $: song = songs[selectedSong];
+  $: filteredScores = searchableScores.filter((score) => {
+    const query = searchQuery.trim().toLowerCase();
+    return (
+      !query || `${score.title} ${score.composer}`.toLowerCase().includes(query)
+    );
+  });
   $: annotationCount = annotations.length + strokes.length;
   $: progress = Math.min(
     100,
@@ -129,6 +182,16 @@
     redoStack = [];
     redrawStrokes();
     lastAction = `${songs[index].title} loaded on the music display`;
+  }
+
+  /** @param {{title: string, composer: string, source: string, songIndex?: number}} score */
+  function selectSearchResult(score) {
+    if (score.songIndex !== undefined) {
+      selectSong(score.songIndex);
+      searchQuery = "";
+      return;
+    }
+    lastAction = `${score.title} found in the online catalog`;
   }
 
   function togglePlay() {
@@ -561,9 +624,7 @@
           {#if annotationMode}<div class="annotation-tip">
               Stylus ready · tap a mark below to place it
             </div>{/if}
-          <div class="paper-footer">
-            <span>SMART PIANO DIGITAL EDITION</span><span>4 / 4</span>
-          </div>
+          <div class="paper-footer"></div>
         </div>
         <div class="display-footer">
           <div>
@@ -578,95 +639,121 @@
       </div>
     </section>
 
-    <aside
-      class="control-deck phone-extension"
-      aria-label="Testing UI and companion song picker"
-    >
-      <div class="phone-screen">
-        <div class="deck-header">
-          <div>
-            <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
-            <h2>Phone extension dock</h2>
-          </div>
-          <span class="device-chip">CONNECTED</span>
-        </div>
-        <p class="deck-description">
+    <section class="phone-panel" aria-labelledby="phone-extension-title">
+      <div class="phone-panel-heading">
+        <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
+        <h2 id="phone-extension-title">Phone extension dock</h2>
+        <p class="phone-panel-description">
           Place your phone in the dock and choose a piece here. Your selection
           loads onto the main music display instantly.
         </p>
-        <div class="song-list">
-          {#each songs as item, index}<button
-              class:selected={selectedSong === index}
-              class="song-item"
-              onclick={() => selectSong(index)}
-              ><span class="song-number">0{index + 1}</span><span
-                class="song-copy"
-                ><strong>{item.title}</strong><small
-                  >{item.composer} · {item.level}</small
-                ></span
-              ><span class="song-arrow">→</span></button
-            >{/each}
-        </div>
-        <div class="deck-section">
-          <div class="section-label">
-            <span>PLAYBACK SIMULATOR</span><span class="mini-status"
-              >{lastAction}</span
-            >
-          </div>
-          <button
-            class:playing={isPlaying}
-            class="play-control"
-            onclick={togglePlay}
-            ><span class="play-symbol">{isPlaying ? "Ⅱ" : "▶"}</span><span
-              ><strong
-                >{isPlaying ? "Pause listening" : "Simulate playing"}</strong
-              ><small
-                >{isPlaying
-                  ? "Audio notes are moving the score"
-                  : "Test audio-synchronized page turns"}</small
-              ></span
-            ><span class="control-chevron">{isPlaying ? "■" : "01"}</span
-            ></button
-          >
-        </div>
-        <div class="deck-section">
-          <div class="section-label">
-            <span>ANNOTATION TOOLS</span><span>{annotationCount} marks</span>
-          </div>
-          <div class="annotation-tools">
-            <button class:active={annotationMode} onclick={toggleAnnotation}
-              >✎ <span>Stylus</span></button
-            ><button class:active={isEraser} onclick={toggleEraser}
-              >⌫ <span>Eraser</span></button
-            ><button onclick={() => addAnnotation("Circle")}
-              >◯ <span>Circle</span></button
-            ><button onclick={() => addAnnotation("Star")}
-              >★ <span>Star</span></button
-            ><button onclick={() => addAnnotation("Line")}
-              >— <span>Line</span></button
-            >
-          </div>
-          <div class="annotation-history">
-            <button disabled={undoStack.length === 0} onclick={undoAnnotation}
-              >↶ Undo</button
-            >
-            <button disabled={redoStack.length === 0} onclick={redoAnnotation}
-              >Redo ↷</button
-            >
-          </div>
-        </div>
-        <button class="documentation-button" onclick={() => (showDocs = true)}
-          ><span>↗</span> View project documentation
-          <small>Design notes, requirements & process</small></button
-        >
       </div>
-    </aside>
+      <aside
+        class="control-deck phone-extension"
+        aria-label="Testing UI and companion song picker"
+      >
+        <div class="phone-screen">
+          <h3 class="companion-title">Smart Piano Companion</h3>
+          <div class="phone-search">
+            <label for="sheet-search">SEARCH SHEET MUSIC</label>
+            <input
+              id="sheet-search"
+              type="search"
+              placeholder="Search title or composer"
+              bind:value={searchQuery}
+            />
+            {#if searchQuery.trim()}
+              <div class="search-results">
+                {#if filteredScores.length === 0}
+                  <p class="search-empty">No scores found in the catalog.</p>
+                {:else}
+                  {#each filteredScores as result}
+                    <button
+                      class="search-result"
+                      onclick={() => selectSearchResult(result)}
+                    >
+                      <span
+                        ><strong>{result.title}</strong><small
+                          >{result.composer}</small
+                        ></span
+                      >
+                      <em>{result.source}</em>
+                    </button>
+                  {/each}
+                {/if}
+              </div>
+            {/if}
+          </div>
+          <div class="song-list">
+            {#each songs as item, index}<button
+                class:selected={selectedSong === index}
+                class="song-item"
+                onclick={() => selectSong(index)}
+                ><span class="song-number">0{index + 1}</span><span
+                  class="song-copy"
+                  ><strong>{item.title}</strong><small
+                    >{item.composer} · {item.level}</small
+                  ></span
+                ><span class="song-arrow">→</span></button
+              >{/each}
+          </div>
+          <div class="deck-section">
+            <div class="section-label">
+              <span>PLAYBACK SIMULATOR</span><span class="mini-status"
+                >{lastAction}</span
+              >
+            </div>
+            <button
+              class:playing={isPlaying}
+              class="play-control"
+              onclick={togglePlay}
+              ><span class="play-symbol">{isPlaying ? "Ⅱ" : "▶"}</span><span
+                ><strong
+                  >{isPlaying ? "Pause listening" : "Simulate playing"}</strong
+                ><small
+                  >{isPlaying
+                    ? "Audio notes are moving the score"
+                    : "Test audio-synchronized page turns"}</small
+                ></span
+              ><span class="control-chevron">{isPlaying ? "■" : "01"}</span
+              ></button
+            >
+          </div>
+          <div class="deck-section">
+            <div class="section-label">
+              <span>ANNOTATION TOOLS</span><span>{annotationCount} marks</span>
+            </div>
+            <div class="annotation-tools">
+              <button class:active={annotationMode} onclick={toggleAnnotation}
+                >✎ <span>Stylus</span></button
+              ><button class:active={isEraser} onclick={toggleEraser}
+                >⌫ <span>Eraser</span></button
+              ><button onclick={() => addAnnotation("Circle")}
+                >◯ <span>Circle</span></button
+              ><button onclick={() => addAnnotation("Star")}
+                >★ <span>Star</span></button
+              ><button onclick={() => addAnnotation("Line")}
+                >— <span>Line</span></button
+              >
+            </div>
+            <div class="annotation-history">
+              <button disabled={undoStack.length === 0} onclick={undoAnnotation}
+                >↶ Undo</button
+              >
+              <button disabled={redoStack.length === 0} onclick={redoAnnotation}
+                >Redo ↷</button
+              >
+            </div>
+          </div>
+        </div>
+      </aside>
+    </section>
   </div>
 
   <footer class="app-footer">
-    <span>PROJECT 01 · INTERFACE TO A SMART OBJECT</span><span
-      >EVAN SOREEFAN · 2026</span
-    ><span>SMART PIANO / v0.4</span>
+    <span>PROJECT 01</span><span>EVAN SOREEFAN</span><span
+      >SMART PIANO / v0.4</span
+    >
   </footer>
 </main>
 
@@ -693,74 +780,5 @@
       <p class="feature-description">
         {features[selectedFeature - 1].description}
       </p>
-    </div>
-  </div>{/if}
-{#if showDocs}<div
-    class="modal-backdrop"
-    role="presentation"
-    onclick={(event) =>
-      event.target === event.currentTarget && (showDocs = false)}
-  >
-    <div
-      class="modal docs-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="docs-title"
-    >
-      <button
-        class="modal-close"
-        aria-label="Close"
-        onclick={() => (showDocs = false)}>×</button
-      >
-      <p class="eyebrow">PROJECT DOCUMENTATION</p>
-      <h2 id="docs-title">Smart Piano / Design notes</h2>
-      <p class="docs-lede">
-        A smart grand piano designed to make digital sheet music feel as
-        immediate as the instrument itself.
-      </p>
-      <div class="docs-grid">
-        <div>
-          <span>OBJECT</span><strong>Grand piano</strong>
-          <p>
-            Large, fixed, acoustic instrument with separate interaction zones:
-            music desk and side-mounted picker.
-          </p>
-        </div>
-        <div>
-          <span>SMART FEATURES</span><strong>Audio sync + sensing</strong>
-          <p>
-            Microphones detect played notes; the system estimates position,
-            tempo, and practice confidence.
-          </p>
-        </div>
-        <div>
-          <span>USER NEEDS</span><strong>Focus and flow</strong>
-          <p>
-            Keep both hands on the instrument, annotate without paper, and
-            recover quickly when lost.
-          </p>
-        </div>
-        <div>
-          <span>IMPLEMENTED OPTIONS</span><strong>Complex input + data</strong>
-          <p>
-            Song selection, stylus marks, playback simulation, and sync
-            feedback.
-          </p>
-        </div>
-      </div>
-      <div class="docs-next">
-        <span>NEXT STUDY</span>
-        <p>
-          Interview three pianists, test the page-turn threshold, and connect a
-          real audio pitch tracker.
-        </p>
-      </div>
-      <div class="docs-links">
-        <a href="https://github.com/" target="_blank" rel="noreferrer"
-          >Source code ↗</a
-        ><a href="https://example.com/" target="_blank" rel="noreferrer"
-          >Portfolio write-up ↗</a
-        >
-      </div>
     </div>
   </div>{/if}

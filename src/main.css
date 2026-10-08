@@ -38,6 +38,20 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .phone-extension .deck-header { border: 0; border-radius: 0; }
 .phone-extension .phone-screen .deck-header { border: 0 !important; border-top: 0 !important; border-bottom: 0 !important; border-radius: 0 !important; }
 .phone-extension::before { display: none; }
+.phone-panel { display: flex; flex-direction: column; align-items: center; padding-top: 42px; background: #171615; }
+.phone-panel-heading { width: 300px; margin-bottom: 16px; }
+.companion-title { margin: 4px 0 16px; color: #f5eee5; font: 400 20px Georgia, serif; letter-spacing: -.2px; }
+.phone-panel-heading h2 { margin: 0; color: #f5eee5; font: 400 25px Georgia, serif; }
+.phone-extension { margin: 0 auto 36px; }
+.phone-panel-description { margin: 12px 0 0; color: #857e75; font: 12px/1.55 Georgia, serif; }
+.phone-search { position: relative; padding: 14px 0 12px; border-bottom: 1px solid #393631; }
+.phone-search label { display: block; margin-bottom: 7px; color: #706961; font-size: 8px; letter-spacing: 1.5px; }
+.phone-search input { width: 100%; padding: 10px 11px; border: 1px solid #4a423b; border-radius: 3px; outline: none; background: #25221f; color: #f2e8de; font: 11px Georgia, serif; }
+.phone-search input:focus { border-color: #bd6c43; box-shadow: 0 0 0 2px rgba(189,108,67,.14); }
+.phone-search input::placeholder { color: #777069; }
+.search-results { position: absolute; right: 0; left: 0; z-index: 4; overflow: hidden; border: 1px solid #4a423b; border-top: 0; background: #211f1c; box-shadow: 0 12px 20px rgba(0,0,0,.35); }
+.search-result { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 9px 10px; border: 0; border-bottom: 1px solid #393631; background: transparent; text-align: left; }
+.search-result:last-child { border-bottom: 0; }.search-result:hover { background: #30251f; }.search-result strong, .search-result small { display: block; }.search-result strong { color: #ead8ca; font: 11px Georgia, serif; }.search-result small { margin-top: 3px; color: #81776e; font-size: 8px; }.search-result em { color: #bd6c43; font-size: 7px; font-style: normal; text-transform: uppercase; }.search-empty { margin: 0; padding: 11px; color: #81776e; font-size: 10px; }
 .overview-copy .feature-list { margin-top: 32px; }
 .overview-copy .feature-card-copy strong { font-size: 18px; }
 .overview-copy .feature-card-copy small { font-size: 11px; }

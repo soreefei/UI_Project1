@@ -128,6 +128,15 @@
   let currentPage = 1;
   let isPlaying = false;
   let isAutoFlip = true;
+  let systemOn = true;
+  let fallboardOpen = true;
+  let fallboardTransition = "";
+  let fallboardTimer;
+  let coffeeTableOpen = false;
+  let bluetoothConnected = true;
+  let recording = false;
+  let recordingProgress = 68;
+  let replayOffset = 0;
   let searchQuery = "";
   let showFeatureInfo = false;
   let annotationMode = false;
@@ -150,13 +159,14 @@
   /** @type {Record<number, {x: number, y: number}>} */
   let featurePositions = {
     1: { x: 49.5, y: 29 },
-    2: { x: 69, y: 54 },
-    3: { x: 62, y: 29 },
+    2: { x: 62, y: 29 },
+    3: { x: 69, y: 54 },
     4: { x: 30, y: 54 },
   };
   /** @type {string[]} */
   let annotations = [];
   let lastAction = "Ready when you are";
+  let playbackStatus = "Ready when you are";
 
   $: song = songs[selectedSong];
   $: filteredScores = searchableScores.filter((score) => {
@@ -182,6 +192,7 @@
     redoStack = [];
     redrawStrokes();
     lastAction = `${songs[index].title} loaded on the music display`;
+    playbackStatus = `${songs[index].title} loaded`;
   }
 
   /** @param {{title: string, composer: string, source: string, songIndex?: number}} score */
@@ -199,6 +210,58 @@
     lastAction = isPlaying
       ? "Listening for your playing..."
       : "Practice paused";
+    playbackStatus = lastAction;
+  }
+
+  function toggleSystem() {
+    if (fallboardTransition) return;
+    const nextSystemOn = !systemOn;
+    systemOn = nextSystemOn;
+    fallboardTransition = nextSystemOn ? "OPENING..." : "CLOSING...";
+    if (!nextSystemOn) {
+      fallboardOpen = false;
+      bluetoothConnected = false;
+      isPlaying = false;
+      recording = false;
+      annotationMode = false;
+      isEraser = false;
+    }
+    lastAction = nextSystemOn
+      ? "Smart Piano system on"
+      : "Smart Piano system off";
+    fallboardTimer = setTimeout(() => {
+      fallboardOpen = nextSystemOn;
+      fallboardTransition = "";
+    }, 3000);
+  }
+
+  function toggleCoffeeTable() {
+    coffeeTableOpen = !coffeeTableOpen;
+    lastAction = coffeeTableOpen
+      ? "Coffee table pulled out"
+      : "Coffee table closed";
+  }
+
+  function toggleBluetooth() {
+    if (!systemOn) return;
+    bluetoothConnected = !bluetoothConnected;
+    lastAction = bluetoothConnected
+      ? "Phone extension connected"
+      : "Phone extension disconnected";
+  }
+
+  /** @param {number} seconds */
+  function replay(seconds) {
+    replayOffset = seconds;
+    lastAction = `Replaying the last ${seconds} seconds`;
+    playbackStatus = lastAction;
+  }
+
+  function toggleRecording() {
+    if (!systemOn) return;
+    recording = !recording;
+    lastAction = recording ? "Recording playing" : "Recording saved";
+    playbackStatus = lastAction;
   }
 
   /** @param {number} direction */
@@ -526,12 +589,15 @@
         </div>
       </div>
 
-      <div class="piano-display">
+      <div class:system-off={!systemOn} class="piano-display">
         <div class="display-rail">
           <span class="display-label">{song.title}</span><span
             class="display-page">{currentPage} / {song.pages}</span
           >
         </div>
+        {#if !systemOn || !bluetoothConnected}
+          <div class="connection-warning">Phone extension disconnected</div>
+        {/if}
         <div class="music-toolbar">
           <div class="toolbar-group">
             <button
@@ -639,6 +705,82 @@
       </div>
     </section>
 
+    <section class="button-hub-section" aria-labelledby="button-hub-title">
+      <div class="button-hub-heading">
+        <p class="eyebrow">DEVICE CONTROL / PHYSICAL BUTTON HUB</p>
+        <h2 id="button-hub-title">Button hub</h2>
+      </div>
+      <div class="button-hub-controls">
+        <button
+          class:active={systemOn}
+          class="hub-control"
+          onclick={toggleSystem}
+        >
+          <span class="hub-icon">⏻</span>
+          <span
+            ><strong>{systemOn ? "Turn system off" : "Turn system on"}</strong
+            ><small>Power display, fallboard, and phone connection</small></span
+          >
+          <em>{systemOn ? "ON" : "OFF"}</em>
+        </button>
+        <button
+          class:active={coffeeTableOpen}
+          class="hub-control"
+          onclick={toggleCoffeeTable}
+        >
+          <span class="hub-icon">⇥</span>
+          <span
+            ><strong
+              >{coffeeTableOpen
+                ? "Close coffee table"
+                : "Pull out coffee table"}</strong
+            ><small>Slide-out surface beneath the keyboard</small></span
+          >
+          <em>{coffeeTableOpen ? "OPEN" : "CLOSED"}</em>
+        </button>
+        <button
+          class:active={bluetoothConnected}
+          class="hub-control"
+          onclick={toggleBluetooth}
+        >
+          <span class="hub-icon">◉</span>
+          <span
+            ><strong
+              >{bluetoothConnected
+                ? "Disconnect phone"
+                : "Connect phone"}</strong
+            ><small>Bluetooth link for the phone extension</small></span
+          >
+          <em>{bluetoothConnected ? "LINKED" : "READY"}</em>
+        </button>
+      </div>
+      <div class="hub-status" aria-label="Smart Piano system status">
+        <div>
+          <span>COFFEE TABLE</span><strong
+            >{coffeeTableOpen ? "OPENED" : "RETRACTED"}</strong
+          >
+        </div>
+        <div>
+          <span>FALLBOARD</span><strong
+            >{fallboardTransition ||
+              (fallboardOpen ? "OPEN" : "CLOSED")}</strong
+          >
+        </div>
+        <div>
+          <span>PHONE</span><strong
+            >{bluetoothConnected && systemOn
+              ? "CONNECTED"
+              : "DISCONNECTED"}</strong
+          >
+        </div>
+        <div>
+          <span>SYSTEM</span><strong class:status-off={!systemOn}
+            >{systemOn ? "ON" : "OFF"}</strong
+          >
+        </div>
+      </div>
+    </section>
+
     <section class="phone-panel" aria-labelledby="phone-extension-title">
       <div class="phone-panel-heading">
         <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
@@ -653,98 +795,156 @@
         aria-label="Testing UI and companion song picker"
       >
         <div class="phone-screen">
-          <h3 class="companion-title">Smart Piano Companion</h3>
-          <div class="phone-search">
-            <label for="sheet-search">SEARCH SHEET MUSIC</label>
-            <input
-              id="sheet-search"
-              type="search"
-              placeholder="Search title or composer"
-              bind:value={searchQuery}
-            />
-            {#if searchQuery.trim()}
-              <div class="search-results">
-                {#if filteredScores.length === 0}
-                  <p class="search-empty">No scores found in the catalog.</p>
-                {:else}
-                  {#each filteredScores as result}
-                    <button
-                      class="search-result"
-                      onclick={() => selectSearchResult(result)}
-                    >
-                      <span
-                        ><strong>{result.title}</strong><small
-                          >{result.composer}</small
-                        ></span
+          {#if !systemOn || !bluetoothConnected}
+            <div class="disconnected-state">
+              <span class="disconnected-icon">×</span>
+              <strong>Music display disconnected</strong>
+              <p>
+                Turn on the system and reconnect Bluetooth to restore the phone
+                extension.
+              </p>
+            </div>
+          {:else}
+            <h3 class="companion-title">Smart Piano Companion</h3>
+            <div class="companion-status">
+              <span></span> Connected via Bluetooth
+            </div>
+            <div class="phone-search">
+              <label for="sheet-search">SEARCH SHEET MUSIC</label>
+              <input
+                id="sheet-search"
+                type="search"
+                placeholder="Search title or composer"
+                bind:value={searchQuery}
+              />
+              {#if searchQuery.trim()}
+                <div class="search-results">
+                  {#if filteredScores.length === 0}
+                    <p class="search-empty">No scores found in the catalog.</p>
+                  {:else}
+                    {#each filteredScores as result}
+                      <button
+                        class="search-result"
+                        onclick={() => selectSearchResult(result)}
                       >
-                      <em>{result.source}</em>
-                    </button>
-                  {/each}
-                {/if}
+                        <span
+                          ><strong>{result.title}</strong><small
+                            >{result.composer}</small
+                          ></span
+                        >
+                        <em>{result.source}</em>
+                      </button>
+                    {/each}
+                  {/if}
+                </div>
+              {/if}
+            </div>
+            <div class="song-list">
+              {#each songs as item, index}<button
+                  class:selected={selectedSong === index}
+                  class="song-item"
+                  onclick={() => selectSong(index)}
+                  ><span class="song-number">0{index + 1}</span><span
+                    class="song-copy"
+                    ><strong>{item.title}</strong><small
+                      >{item.composer} · {item.level}</small
+                    ></span
+                  ><span class="song-arrow">→</span></button
+                >{/each}
+            </div>
+            <div class="deck-section">
+              <div class="section-label">
+                <span>PLAYBACK</span><span class="mini-status"
+                  >{playbackStatus}</span
+                >
               </div>
-            {/if}
-          </div>
-          <div class="song-list">
-            {#each songs as item, index}<button
-                class:selected={selectedSong === index}
-                class="song-item"
-                onclick={() => selectSong(index)}
-                ><span class="song-number">0{index + 1}</span><span
-                  class="song-copy"
-                  ><strong>{item.title}</strong><small
-                    >{item.composer} · {item.level}</small
-                  ></span
-                ><span class="song-arrow">→</span></button
-              >{/each}
-          </div>
-          <div class="deck-section">
-            <div class="section-label">
-              <span>PLAYBACK SIMULATOR</span><span class="mini-status"
-                >{lastAction}</span
-              >
+              <div class="playback-buttons">
+                <button
+                  class:playing={isPlaying}
+                  class="play-control"
+                  onclick={togglePlay}
+                >
+                  <strong>{isPlaying ? "Pause" : "Play"}</strong>
+                </button>
+                <button
+                  class:active={replayOffset === 30}
+                  class="replay-button"
+                  onclick={() => replay(30)}>↶ <strong>30s</strong></button
+                >
+                <button
+                  class:active={replayOffset === 20}
+                  class="replay-button"
+                  onclick={() => replay(20)}>↶ <strong>20s</strong></button
+                >
+                <button
+                  class:active={replayOffset === 10}
+                  class="replay-button"
+                  onclick={() => replay(10)}>↶ <strong>10s</strong></button
+                >
+              </div>
             </div>
-            <button
-              class:playing={isPlaying}
-              class="play-control"
-              onclick={togglePlay}
-              ><span class="play-symbol">{isPlaying ? "Ⅱ" : "▶"}</span><span
-                ><strong
-                  >{isPlaying ? "Pause listening" : "Simulate playing"}</strong
+            <div class="deck-section recording-section">
+              <div class="section-label">
+                <span>RECORD PLAYING</span><span
+                  >{recording ? "RECORDING" : "LATEST TAKE"}</span
+                >
+              </div>
+              <button
+                class:recording
+                class="record-button"
+                onclick={toggleRecording}
+              >
+                <span class="record-dot"></span><strong
+                  >{recording ? "Stop recording" : "Record playing"}</strong
                 ><small
-                  >{isPlaying
-                    ? "Audio notes are moving the score"
-                    : "Test audio-synchronized page turns"}</small
-                ></span
-              ><span class="control-chevron">{isPlaying ? "■" : "01"}</span
-              ></button
-            >
-          </div>
-          <div class="deck-section">
-            <div class="section-label">
-              <span>ANNOTATION TOOLS</span><span>{annotationCount} marks</span>
+                  >{recording
+                    ? "Capturing your performance"
+                    : "Ready for a new take"}</small
+                >
+              </button>
+              <div class="recording-scrubber">
+                <div class="scrubber-label">
+                  <span>Latest recording</span><span>{recordingProgress}%</span>
+                </div>
+                <input
+                  aria-label="Scrub latest recording"
+                  type="range"
+                  min="0"
+                  max="100"
+                  bind:value={recordingProgress}
+                />
+              </div>
             </div>
-            <div class="annotation-tools">
-              <button class:active={annotationMode} onclick={toggleAnnotation}
-                >✎ <span>Stylus</span></button
-              ><button class:active={isEraser} onclick={toggleEraser}
-                >⌫ <span>Eraser</span></button
-              ><button onclick={() => addAnnotation("Circle")}
-                >◯ <span>Circle</span></button
-              ><button onclick={() => addAnnotation("Star")}
-                >★ <span>Star</span></button
-              ><button onclick={() => addAnnotation("Line")}
-                >— <span>Line</span></button
-              >
+            <div class="deck-section">
+              <div class="section-label">
+                <span>ANNOTATION TOOLS</span><span>{annotationCount} marks</span
+                >
+              </div>
+              <div class="annotation-tools">
+                <button class:active={annotationMode} onclick={toggleAnnotation}
+                  >✎ <span>Stylus</span></button
+                ><button class:active={isEraser} onclick={toggleEraser}
+                  >⌫ <span>Eraser</span></button
+                ><button onclick={() => addAnnotation("Circle")}
+                  >◯ <span>Circle</span></button
+                ><button onclick={() => addAnnotation("Star")}
+                  >★ <span>Star</span></button
+                ><button onclick={() => addAnnotation("Line")}
+                  >— <span>Line</span></button
+                >
+              </div>
+              <div class="annotation-history">
+                <button
+                  disabled={undoStack.length === 0}
+                  onclick={undoAnnotation}>↶ Undo</button
+                >
+                <button
+                  disabled={redoStack.length === 0}
+                  onclick={redoAnnotation}>Redo ↷</button
+                >
+              </div>
             </div>
-            <div class="annotation-history">
-              <button disabled={undoStack.length === 0} onclick={undoAnnotation}
-                >↶ Undo</button
-              >
-              <button disabled={redoStack.length === 0} onclick={redoAnnotation}
-                >Redo ↷</button
-              >
-            </div>
-          </div>
+          {/if}
         </div>
       </aside>
     </section>

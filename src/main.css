@@ -41,6 +41,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .phone-panel { display: flex; flex-direction: column; align-items: center; padding-top: 42px; background: #171615; }
 .phone-panel-heading { width: 300px; margin-bottom: 16px; }
 .companion-title { margin: 4px 0 16px; color: #f5eee5; font: 400 20px Georgia, serif; letter-spacing: -.2px; }
+.button-hub-section { grid-column: 1; grid-row: 2; padding: 30px 46px 42px; border-right: 1px solid #35332e; background: linear-gradient(115deg, rgba(52, 48, 40, .25), transparent 56%); }
+.phone-panel { grid-column: 2; grid-row: 1 / span 2; }
+.button-hub-heading { margin-bottom: 14px; }.button-hub-heading h2 { margin: 0; color: #f5eee5; font: 400 25px Georgia, serif; }
+.button-hub-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hub-control { display: grid; grid-template-columns: 28px 1fr; gap: 9px; min-height: 72px; padding: 12px; border: 1px solid #413a34; background: #211f1c; text-align: left; }
+.hub-control:hover, .hub-control.active { border-color: #bd6c43; background: #30231d; }.hub-icon { color: #bd6c43; font-size: 20px; }.hub-control strong, .hub-control small { display: block; }.hub-control strong { font: 13px Georgia, serif; }.hub-control small { margin-top: 5px; color: #81776e; font-size: 8px; line-height: 1.35; }.hub-control em { grid-column: 2; color: #bd6c43; font-size: 8px; font-style: normal; letter-spacing: 1px; }
+.hub-status { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; padding: 12px; border: 1px solid #393631; background: #1b1a18; }.hub-status span, .hub-status strong { display: block; }.hub-status span { color: #706961; font-size: 8px; letter-spacing: 1px; }.hub-status strong { margin-top: 5px; color: #d18a62; font-size: 10px; letter-spacing: .5px; }.hub-status .status-off { color: #81776e; }.piano-display.system-off { filter: grayscale(1); opacity: .48; }
+.disconnected-state { display: flex; min-height: 420px; flex-direction: column; align-items: center; justify-content: center; padding: 30px; color: #837a72; text-align: center; }.disconnected-icon { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 18px; border: 1px solid #66564b; border-radius: 50%; color: #bd6c43; font-size: 28px; }.disconnected-state strong { color: #d5c5ba; font: 17px Georgia, serif; }.disconnected-state p { max-width: 180px; margin: 10px 0 0; font: 11px/1.5 Georgia, serif; }
+.connection-warning { padding: 13px 18px; border-bottom: 1px solid #9a5a3d; background: #39251f; color: #e0a77f; font: 12px Georgia, serif; text-align: center; }
+.companion-status { display: flex; align-items: center; gap: 7px; margin: -9px 0 14px; color: #91ac83; font-size: 9px; letter-spacing: .4px; }.companion-status span { width: 7px; height: 7px; border-radius: 50%; background: #91ac83; box-shadow: 0 0 8px #91ac83; }
+.playback-buttons { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 5px; }.playback-buttons .play-control { min-width: 0; padding: 10px; }.playback-buttons .play-symbol { width: 20px; }.replay-button { min-height: 43px; padding: 7px 4px; border: 1px solid #46403a; background: #25221f; color: #aaa39a; font-size: 10px; }.replay-button.active, .replay-button:hover { border-color: #9a5a3d; color: #e0a77f; background: #30231d; }.record-button { display: grid; grid-template-columns: 14px 1fr; gap: 8px; width: 100%; padding: 11px; border: 1px solid #46403a; background: #25221f; text-align: left; }.record-button.recording { border-color: #bd4f43; background: #30201e; }.record-dot { width: 9px; height: 9px; margin-top: 3px; border-radius: 50%; background: #bd4f43; }.record-button:not(.recording) .record-dot { background: #796b61; }.record-button strong, .record-button small { display: block; }.record-button strong { font: 12px Georgia, serif; }.record-button small { margin-top: 3px; color: #81776e; font-size: 8px; }.recording-scrubber { margin-top: 11px; }.scrubber-label { display: flex; justify-content: space-between; color: #81776e; font-size: 8px; }.recording-scrubber input { width: 100%; margin: 8px 0 0; accent-color: #bd6c43; }
 .phone-panel-heading h2 { margin: 0; color: #f5eee5; font: 400 25px Georgia, serif; }
 .phone-extension { margin: 0 auto 36px; }
 .phone-panel-description { margin: 12px 0 0; color: #857e75; font: 12px/1.55 Georgia, serif; }
@@ -57,6 +68,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .overview-copy .feature-card-copy small { font-size: 11px; }
 .overview-copy .feature-number { font-size: 14px; }
 .map-selected { gap: 14px; padding: 18px; }
+.record-button { grid-template-columns: 14px minmax(0, 1fr); }
+.record-button small { white-space: nowrap; font-size: 8px; }
+.recording-scrubber input { appearance: none; height: 4px; border-radius: 4px; outline: none; background: #51443b; }
+.recording-scrubber input::-webkit-slider-thumb { appearance: none; width: 15px; height: 15px; border: 2px solid #f0c0a2; border-radius: 50%; background: #bd6c43; box-shadow: 0 0 0 2px rgba(189,108,67,.2); cursor: pointer; }
+.recording-scrubber input::-moz-range-thumb { width: 15px; height: 15px; border: 2px solid #f0c0a2; border-radius: 50%; background: #bd6c43; box-shadow: 0 0 0 2px rgba(189,108,67,.2); cursor: pointer; }
+.playback-buttons .play-control { justify-content: center; text-align: center; }
 .map-selected-number { font-size: 17px; }
 .map-selected strong { font-size: 16px; }
 .map-selected small { font-size: 13px; line-height: 1.55; }

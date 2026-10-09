@@ -124,6 +124,26 @@
     },
   ];
 
+  // 24x24 stroke icons, drawn as a single path each.
+  const icons = {
+    prev: "M15 18l-6-6 6-6",
+    next: "M9 18l6-6-6-6",
+    pen: "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z",
+    eraser:
+      "M7 21l-4.3-4.3a2.4 2.4 0 0 1 0-3.4l9.6-9.6a2.4 2.4 0 0 1 3.4 0l5.6 5.6a2.4 2.4 0 0 1 0 3.4L13 21M22 21H7M5 11l9 9",
+    undo: "M9 14L4 9l5-5M20 20v-7a4 4 0 0 0-4-4H4",
+    redo: "M15 14l5-5-5-5M4 20v-7a4 4 0 0 1 4-4h12",
+    sun: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4",
+    power: "M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10",
+    cup: "M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4zM6 1v3M10 1v3M14 1v3",
+    bluetooth: "M6.5 6.5l11 11L12 23V1l5.5 5.5-11 11",
+    replay: "M1 4v6h6M3.51 15a9 9 0 1 0 2.13-9.36L1 10",
+    circle: "M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z",
+    star: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z",
+    line: "M4 12h16",
+    close: "M6 6l12 12M18 6L6 18",
+  };
+
   let selectedSong = 0;
   let currentPage = 1;
   let isPlaying = false;
@@ -156,12 +176,13 @@
   let undoStack = [];
   /** @type {{strokes: {x: number, y: number}[][], annotations: string[]}[]} */
   let redoStack = [];
+  // Percentages of the piano drawing itself, so markers stay put at any width.
   /** @type {Record<number, {x: number, y: number}>} */
   let featurePositions = {
     1: { x: 49.5, y: 29 },
-    2: { x: 62, y: 29 },
-    3: { x: 69, y: 54 },
-    4: { x: 30, y: 54 },
+    2: { x: 76, y: 29 },
+    3: { x: 79, y: 51 },
+    4: { x: 21, y: 54.5 },
   };
   /** @type {string[]} */
   let annotations = [];
@@ -217,7 +238,7 @@
     if (fallboardTransition) return;
     const nextSystemOn = !systemOn;
     systemOn = nextSystemOn;
-    fallboardTransition = nextSystemOn ? "OPENING..." : "CLOSING...";
+    fallboardTransition = nextSystemOn ? "Opening…" : "Closing…";
     if (!nextSystemOn) {
       fallboardOpen = false;
       bluetoothConnected = false;
@@ -370,7 +391,7 @@
     const ratio = window.devicePixelRatio || 1;
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     context.clearRect(0, 0, bounds.width, bounds.height);
-    context.strokeStyle = "#bd4f43";
+    context.strokeStyle = "#a81f2d";
     context.lineWidth = 3;
     context.lineCap = "round";
     context.lineJoin = "round";
@@ -475,485 +496,554 @@
 </script>
 
 <svelte:head>
-  <title>Smart Piano | Interactive Grand Piano Prototype</title>
+  <title>Smart Piano, a prototype by Evan Soreefan</title>
   <meta
     name="description"
     content="A smart grand piano interface prototype with synchronized sheet music and companion song picker."
   />
 </svelte:head>
 
-<main class="app-shell">
-  <header class="topbar">
-    <h1 class="topbar-title">Smart Piano</h1>
+<svelte:window
+  onkeydown={(event) => event.key === "Escape" && (showFeatureInfo = false)}
+/>
+
+<main class="page">
+  <header class="title-page">
+    <h1>Smart Piano</h1>
+    <p class="title-sub">A piano that keeps the pianist in the music.</p>
+    <div class="title-credits">
+      <span>Project 1, interactive prototype</span>
+      <span>Evan Soreefan</span>
+    </div>
+    <div class="staff" aria-hidden="true"></div>
   </header>
 
-  <section class="portfolio-intro" aria-labelledby="portfolio-title">
-    <div class="portfolio-copy">
-      <p class="eyebrow">PORTFOLIO / PROJECT 01</p>
-      <h2 id="portfolio-title">Evan Soreefan</h2>
-      <p>
+  <section class="about" aria-labelledby="about-title">
+    <h2 id="about-title" class="visually-hidden">About Evan Soreefan</h2>
+    <img class="portrait" src={profileImage} alt="Portrait of Evan Soreefan" />
+    <div class="about-copy">
+      <p class="about-lead">
         Hi, I'm Evan Soreefan, a fourth-year Computer Science student from the
         University of Cincinnati.
       </p>
-      <p class="portfolio-detail">
+      <p>
         Most of my knowledge and expertise involve programming in C/C++ and
         front-end development. I have been a co-op at Bilstein of America and
         Siemens Digital Industries Software (two-time intern).
       </p>
     </div>
-    <img
-      class="profile-image"
-      src={profileImage}
-      alt="Portrait of Evan Soreefan"
-    />
   </section>
 
-  <section class="object-overview" aria-labelledby="overview-title">
-    <div class="overview-copy">
-      <p class="eyebrow">PHYSICAL OBJECT / FEATURE MAP</p>
-      <h1 id="overview-title">Smart Piano</h1>
-      <p class="overview-lede">
-        A piano that keeps the pianist in the music. The physical instrument
-        stays familiar while digital tools quietly extend the music desk, the
-        soundboard, and the pianist's workflow.
+  <section class="instrument" aria-labelledby="instrument-title">
+    <div class="instrument-copy">
+      <h2 id="instrument-title">What's built into the piano</h2>
+      <p class="lede">
+        The physical instrument stays familiar while digital tools quietly
+        extend the music desk, the soundboard, and the pianist's workflow.
       </p>
-      <div class="feature-list">
+      <ul class="feature-list">
+        {#each features as feature}
+          <li>
+            <button
+              class:selected={selectedFeature === feature.number}
+              class="feature-row"
+              onclick={() => selectFeature(feature.number)}
+            >
+              <span class="mark">{feature.number}</span>
+              <span class="feature-row-copy"
+                ><strong>{feature.name}</strong><small>{feature.location}</small
+                ></span
+              >
+            </button>
+          </li>
+        {/each}
+      </ul>
+    </div>
+    <figure class="plate">
+      <div
+        class="piano-map"
+        role="group"
+        aria-label="Front-view piano drawing with feature markers"
+      >
+        <img
+          class="piano-image"
+          src={pianoImage}
+          alt="Line drawing of a piano and bench, seen from the front"
+        />
         {#each features as feature}
           <button
-            class:selected={selectedFeature === feature.number}
-            class="feature-card"
+            class:active={selectedFeature === feature.number}
+            class="mark map-point"
+            style={`left: ${featurePositions[feature.number].x}%; top: ${featurePositions[feature.number].y}%;`}
+            aria-label={`Select ${feature.name}`}
             onclick={() => selectFeature(feature.number)}
+            >{feature.number}</button
           >
-            <span class="feature-number">0{feature.number}</span>
-            <span class="feature-card-copy"
-              ><strong>{feature.name}</strong><small>{feature.location}</small
-              ></span
-            >
-            <span class="feature-card-arrow"
-              >{selectedFeature === feature.number ? "—" : "→"}</span
-            >
-          </button>
         {/each}
       </div>
-    </div>
-    <div
-      class="piano-map"
-      aria-label="Front-view grand piano image with feature markers"
-    >
-      <img
-        class="piano-image"
-        src={pianoImage}
-        alt="Front view of a grand piano"
-      />
-      {#each features as feature}
+      <figcaption>
         <button
-          class:active={selectedFeature === feature.number}
-          class="map-point"
-          style={`left: ${featurePositions[feature.number].x}%; top: ${featurePositions[feature.number].y}%;`}
-          aria-label={`Select ${feature.name}`}
-          onclick={() => selectFeature(feature.number)}>{feature.number}</button
+          class="plate-caption"
+          aria-label={`Open details for ${features[selectedFeature - 1].name}`}
+          onclick={() => (showFeatureInfo = true)}
         >
-      {/each}
-      <button
-        class="map-selected"
-        aria-label={`Open details for ${features[selectedFeature - 1].name}`}
-        onclick={() => (showFeatureInfo = true)}
-      >
-        <span class="map-selected-number">0{selectedFeature}</span>
-        <div>
-          <strong>{features[selectedFeature - 1].name}</strong><small
-            >{features[selectedFeature - 1].description}</small
-          >
-        </div>
-      </button>
-    </div>
+          <span class="mark is-current">{selectedFeature}</span>
+          <span>
+            <strong>{features[selectedFeature - 1].name}</strong>
+            <span class="caption-text"
+              >{features[selectedFeature - 1].description}</span
+            >
+            <span class="caption-action">Open details</span>
+          </span>
+        </button>
+      </figcaption>
+    </figure>
   </section>
 
-  <div class="prototype-divider">
-    <span>INTERACTIVE PROTOTYPE</span><span
-      >Scroll to explore the interface</span
-    >
-  </div>
+  <section class="prototype" aria-labelledby="prototype-title">
+    <div class="prototype-intro">
+      <h2 id="prototype-title">Try the prototype</h2>
+      <p>
+        Everything below is live. Choose a piece on the phone, turn pages and
+        annotate on the display, and press the hub buttons to see the piano
+        respond.
+      </p>
+    </div>
 
-  <div class="workspace">
-    <section class="device-stage" aria-label="Smart grand piano device">
-      <div class="stage-heading">
-        <div>
-          <p class="eyebrow">DEVICE UI / MAIN DISPLAY</p>
-          <h1>Main music display</h1>
+    <div class="instrument-front">
+      <section class="device-stage" aria-labelledby="display-title">
+        <div class="device-heading">
+          <h3 id="display-title">Main music display</h3>
+          <p class:active={isPlaying} class="listen-state">
+            <span class="lamp"></span>{isPlaying ? "Listening" : "Standing by"}
+          </p>
         </div>
-        <div class="stage-status">
-          <span class:active={isPlaying} class="status-ring"></span><span
-            >{isPlaying ? "LISTENING" : "STANDBY"}</span
-          >
-        </div>
-      </div>
 
-      <div class:system-off={!systemOn} class="piano-display">
-        <div class="display-rail">
-          <span class="display-label">{song.title}</span><span
-            class="display-page">{currentPage} / {song.pages}</span
-          >
-        </div>
-        {#if !systemOn || !bluetoothConnected}
-          <div class="connection-warning">Phone extension disconnected</div>
-        {/if}
-        <div class="music-toolbar">
-          <div class="toolbar-group">
-            <button
-              class="icon-button"
-              aria-label="Previous page"
-              onclick={() => flipPage(-1)}
-              disabled={currentPage === 1}>‹</button
-            ><button
-              class="icon-button"
-              aria-label="Next page"
-              onclick={() => flipPage(1)}
-              disabled={currentPage === song.pages}>›</button
+        <div class:system-off={!systemOn} class="screen">
+          <div class="screen-rail">
+            <span class="now-title"
+              >{song.title}<span
+                >{song.composer}, {song.mood.toLowerCase()}</span
+              ></span
             >
+            <span class="page-count">Page {currentPage} of {song.pages}</span>
           </div>
-          <div class="toolbar-center">
-            <span class="tempo-pulse" class:playing={isPlaying}
-            ></span>{isPlaying ? "Audio sync active" : "Manual page turn"}<span
-              class="toolbar-separator"
-            ></span><button
-              class:enabled={isAutoFlip}
-              class="toggle-text"
-              onclick={() => (isAutoFlip = !isAutoFlip)}
-              >Auto-flip {isAutoFlip ? "on" : "off"}</button
-            >
-          </div>
-          <div class="toolbar-group">
-            <button
-              class:enabled={annotationMode}
-              class="tool-button"
-              onclick={toggleAnnotation}
-              ><span class="pen-icon">✎</span> Annotate</button
-            ><button
-              class:enabled={isEraser}
-              class="tool-button"
-              aria-label="Toggle eraser"
-              title="Toggle eraser"
-              onclick={toggleEraser}>⌫</button
-            ><button
-              class="tool-button"
-              aria-label="Undo annotation"
-              title="Undo annotation"
-              disabled={undoStack.length === 0}
-              onclick={undoAnnotation}>↶</button
-            ><button
-              class="tool-button"
-              aria-label="Redo annotation"
-              title="Redo annotation"
-              disabled={redoStack.length === 0}
-              onclick={redoAnnotation}>↷</button
-            ><button
-              class="tool-button"
-              onclick={() => (lastAction = "Display brightness adjusted")}
-              >☼</button
-            >
-          </div>
-        </div>
-        <div class="score-paper" class:annotation-mode={annotationMode}>
-          <div class="paper-header">
-            <span>{song.composer.toUpperCase()}</span><span class="paper-title"
-              >{song.title}</span
-            ><span>p. {currentPage}</span>
-          </div>
-          <div class="score-subtitle">
-            {song.mood} · {song.level} arrangement
-          </div>
-          <div class="sheet-layer">
-            <div class="pdf-page-layer" bind:this={pageLayer}>
-              <canvas
-                bind:this={pdfCanvas}
-                class="pdf-render"
-                aria-label={`${song.title} sheet music, page ${currentPage}`}
-              ></canvas>
-              <canvas
-                bind:this={drawingCanvas}
-                class:active={annotationMode}
-                class="drawing-canvas"
-                aria-label="Draw annotations over the sheet music"
-                onpointerdown={startDrawing}
-                onpointermove={draw}
-                onpointerup={stopDrawing}
-                onpointercancel={stopDrawing}
-              ></canvas>
+          {#if !systemOn || !bluetoothConnected}
+            <div class="connection-warning">Phone extension disconnected</div>
+          {/if}
+          <div class="screen-toolbar">
+            <div class="toolbar-group">
+              <button
+                class="tool-button"
+                aria-label="Previous page"
+                title="Previous page"
+                onclick={() => flipPage(-1)}
+                disabled={currentPage === 1}
+                ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                  ><path d={icons.prev} /></svg
+                ></button
+              ><button
+                class="tool-button"
+                aria-label="Next page"
+                title="Next page"
+                onclick={() => flipPage(1)}
+                disabled={currentPage === song.pages}
+                ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                  ><path d={icons.next} /></svg
+                ></button
+              >
+            </div>
+            <div class="toolbar-center">
+              <span class="tempo-pulse" class:playing={isPlaying}></span>
+              <span>{isPlaying ? "Audio sync active" : "Manual page turn"}</span
+              >
+              <button
+                class:enabled={isAutoFlip}
+                class="toggle-text"
+                onclick={() => (isAutoFlip = !isAutoFlip)}
+                >Auto-flip {isAutoFlip ? "on" : "off"}</button
+              >
+            </div>
+            <div class="toolbar-group">
+              <button
+                class:enabled={annotationMode}
+                class="tool-button"
+                onclick={toggleAnnotation}
+                ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                  ><path d={icons.pen} /></svg
+                >Annotate</button
+              ><button
+                class:enabled={isEraser}
+                class="tool-button"
+                aria-label="Toggle eraser"
+                title="Toggle eraser"
+                onclick={toggleEraser}
+                ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                  ><path d={icons.eraser} /></svg
+                ></button
+              ><button
+                class="tool-button"
+                aria-label="Undo annotation"
+                title="Undo annotation"
+                disabled={undoStack.length === 0}
+                onclick={undoAnnotation}
+                ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                  ><path d={icons.undo} /></svg
+                ></button
+              ><button
+                class="tool-button"
+                aria-label="Redo annotation"
+                title="Redo annotation"
+                disabled={redoStack.length === 0}
+                onclick={redoAnnotation}
+                ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                  ><path d={icons.redo} /></svg
+                ></button
+              ><button
+                class="tool-button"
+                aria-label="Adjust brightness"
+                title="Adjust brightness"
+                onclick={() => (lastAction = "Display brightness adjusted")}
+                ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                  ><path d={icons.sun} /></svg
+                ></button
+              >
             </div>
           </div>
-          {#if annotations.length > 0}<div class="annotation-pins">
-              {#each annotations as mark}<span
-                  >{mark === "Circle" ? "◯" : mark === "Star" ? "★" : "—"}</span
-                >{/each}
-            </div>{/if}
-          {#if annotationMode}<div class="annotation-tip">
-              Stylus ready · tap a mark below to place it
-            </div>{/if}
-          <div class="paper-footer"></div>
+          <div class="score-tray" class:annotation-mode={annotationMode}>
+            <div class="sheet-layer">
+              <div class="pdf-page-layer" bind:this={pageLayer}>
+                <canvas
+                  bind:this={pdfCanvas}
+                  class="pdf-render"
+                  aria-label={`${song.title} sheet music, page ${currentPage}`}
+                ></canvas>
+                <canvas
+                  bind:this={drawingCanvas}
+                  class:active={annotationMode}
+                  class="drawing-canvas"
+                  aria-label="Draw annotations over the sheet music"
+                  onpointerdown={startDrawing}
+                  onpointermove={draw}
+                  onpointerup={stopDrawing}
+                  onpointercancel={stopDrawing}
+                ></canvas>
+              </div>
+            </div>
+            {#if annotations.length > 0}<div class="annotation-pins">
+                {#each annotations as mark}<svg
+                    class="icon"
+                    viewBox="0 0 24 24"
+                    role="img"
+                    aria-label={`${mark} mark`}
+                    ><path
+                      d={mark === "Circle"
+                        ? icons.circle
+                        : mark === "Star"
+                          ? icons.star
+                          : icons.line}
+                    /></svg
+                  >{/each}
+              </div>{/if}
+            {#if annotationMode}<div class="annotation-tip">
+                Stylus ready. Draw on the page, or add a mark from the phone.
+              </div>{/if}
+          </div>
+          <div class="screen-footer">
+            <div>Sync confidence <strong>94%</strong></div>
+            <div class="progress-track">
+              <span style={`width: ${progress}%`}></span>
+            </div>
+            <div>Swipe or use the arrows to turn</div>
+          </div>
         </div>
-        <div class="display-footer">
-          <div>
-            <span class="footer-label">SYNC CONFIDENCE</span><strong>94%</strong
+      </section>
+
+      <section class="hub" aria-labelledby="hub-title">
+        <div class="device-heading">
+          <h3 id="hub-title">Button hub</h3>
+        </div>
+        <div class="hub-keys">
+          <button
+            class:active={systemOn}
+            class="hub-key"
+            onclick={toggleSystem}
+          >
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+              ><path d={icons.power} /></svg
             >
+            <span
+              ><strong>{systemOn ? "Turn system off" : "Turn system on"}</strong
+              ><small>Power display, fallboard, and phone connection</small
+              ></span
+            >
+            <span class="hub-lamp" aria-hidden="true"></span>
+          </button>
+          <button
+            class:active={coffeeTableOpen}
+            class="hub-key"
+            onclick={toggleCoffeeTable}
+          >
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+              ><path d={icons.cup} /></svg
+            >
+            <span
+              ><strong
+                >{coffeeTableOpen
+                  ? "Close coffee table"
+                  : "Pull out coffee table"}</strong
+              ><small>Slide-out surface beneath the keyboard</small></span
+            >
+            <span class="hub-lamp" aria-hidden="true"></span>
+          </button>
+          <button
+            class:active={bluetoothConnected}
+            class="hub-key"
+            onclick={toggleBluetooth}
+          >
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+              ><path d={icons.bluetooth} /></svg
+            >
+            <span
+              ><strong
+                >{bluetoothConnected
+                  ? "Disconnect phone"
+                  : "Connect phone"}</strong
+              ><small>Bluetooth link for the phone extension</small></span
+            >
+            <span class="hub-lamp" aria-hidden="true"></span>
+          </button>
+        </div>
+        <dl class="hub-status" aria-label="Smart Piano system status">
+          <div>
+            <dt>Coffee table</dt>
+            <dd class:status-off={!coffeeTableOpen}>
+              {coffeeTableOpen ? "Pulled out" : "Closed"}
+            </dd>
           </div>
-          <div class="progress-track">
-            <span style={`width: ${progress}%`}></span>
+          <div>
+            <dt>Fallboard</dt>
+            <dd class:status-off={!fallboardTransition && !fallboardOpen}>
+              {fallboardTransition || (fallboardOpen ? "Open" : "Closed")}
+            </dd>
           </div>
-          <div class="page-gesture">Swipe or use arrows to turn</div>
-        </div>
-      </div>
-    </section>
+          <div>
+            <dt>Phone</dt>
+            <dd class:status-off={!(bluetoothConnected && systemOn)}>
+              {bluetoothConnected && systemOn ? "Connected" : "Disconnected"}
+            </dd>
+          </div>
+          <div>
+            <dt>System</dt>
+            <dd class:status-off={!systemOn}>{systemOn ? "On" : "Off"}</dd>
+          </div>
+        </dl>
+      </section>
 
-    <section class="button-hub-section" aria-labelledby="button-hub-title">
-      <div class="button-hub-heading">
-        <p class="eyebrow">DEVICE CONTROL / PHYSICAL BUTTON HUB</p>
-        <h2 id="button-hub-title">Button hub</h2>
-      </div>
-      <div class="button-hub-controls">
-        <button
-          class:active={systemOn}
-          class="hub-control"
-          onclick={toggleSystem}
-        >
-          <span class="hub-icon">⏻</span>
-          <span
-            ><strong>{systemOn ? "Turn system off" : "Turn system on"}</strong
-            ><small>Power display, fallboard, and phone connection</small></span
-          >
-          <em>{systemOn ? "ON" : "OFF"}</em>
-        </button>
-        <button
-          class:active={coffeeTableOpen}
-          class="hub-control"
-          onclick={toggleCoffeeTable}
-        >
-          <span class="hub-icon">⇥</span>
-          <span
-            ><strong
-              >{coffeeTableOpen
-                ? "Close coffee table"
-                : "Pull out coffee table"}</strong
-            ><small>Slide-out surface beneath the keyboard</small></span
-          >
-          <em>{coffeeTableOpen ? "OPEN" : "CLOSED"}</em>
-        </button>
-        <button
-          class:active={bluetoothConnected}
-          class="hub-control"
-          onclick={toggleBluetooth}
-        >
-          <span class="hub-icon">◉</span>
-          <span
-            ><strong
-              >{bluetoothConnected
-                ? "Disconnect phone"
-                : "Connect phone"}</strong
-            ><small>Bluetooth link for the phone extension</small></span
-          >
-          <em>{bluetoothConnected ? "LINKED" : "READY"}</em>
-        </button>
-      </div>
-      <div class="hub-status" aria-label="Smart Piano system status">
-        <div>
-          <span>COFFEE TABLE</span><strong
-            >{coffeeTableOpen ? "OPENED" : "RETRACTED"}</strong
-          >
+      <section class="dock" aria-labelledby="dock-title">
+        <div class="device-heading">
+          <h3 id="dock-title">Phone extension dock</h3>
         </div>
-        <div>
-          <span>FALLBOARD</span><strong
-            >{fallboardTransition ||
-              (fallboardOpen ? "OPEN" : "CLOSED")}</strong
-          >
-        </div>
-        <div>
-          <span>PHONE</span><strong
-            >{bluetoothConnected && systemOn
-              ? "CONNECTED"
-              : "DISCONNECTED"}</strong
-          >
-        </div>
-        <div>
-          <span>SYSTEM</span><strong class:status-off={!systemOn}
-            >{systemOn ? "ON" : "OFF"}</strong
-          >
-        </div>
-      </div>
-    </section>
-
-    <section class="phone-panel" aria-labelledby="phone-extension-title">
-      <div class="phone-panel-heading">
-        <p class="eyebrow">PHONE EXTENSION / TESTING UI</p>
-        <h2 id="phone-extension-title">Phone extension dock</h2>
-        <p class="phone-panel-description">
+        <p class="device-note">
           Place your phone in the dock and choose a piece here. Your selection
           loads onto the main music display instantly.
         </p>
-      </div>
-      <aside
-        class="control-deck phone-extension"
-        aria-label="Testing UI and companion song picker"
-      >
-        <div class="phone-screen">
-          {#if !systemOn || !bluetoothConnected}
-            <div class="disconnected-state">
-              <span class="disconnected-icon">×</span>
-              <strong>Music display disconnected</strong>
-              <p>
-                Turn on the system and reconnect Bluetooth to restore the phone
-                extension.
+        <aside class="phone" aria-label="Companion app on the docked phone">
+          <div class="phone-screen">
+            {#if !systemOn || !bluetoothConnected}
+              <div class="disconnected-state">
+                <span class="disconnected-icon"
+                  ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                    ><path d={icons.close} /></svg
+                  ></span
+                >
+                <strong>Music display disconnected</strong>
+                <p>
+                  Turn on the system and reconnect Bluetooth to restore the
+                  phone extension.
+                </p>
+              </div>
+            {:else}
+              <p class="app-title">Smart Piano Companion</p>
+              <p class="companion-status">
+                <span></span>Connected via Bluetooth
               </p>
-            </div>
-          {:else}
-            <h3 class="companion-title">Smart Piano Companion</h3>
-            <div class="companion-status">
-              <span></span> Connected via Bluetooth
-            </div>
-            <div class="phone-search">
-              <label for="sheet-search">SEARCH SHEET MUSIC</label>
-              <input
-                id="sheet-search"
-                type="search"
-                placeholder="Search title or composer"
-                bind:value={searchQuery}
-              />
-              {#if searchQuery.trim()}
-                <div class="search-results">
-                  {#if filteredScores.length === 0}
-                    <p class="search-empty">No scores found in the catalog.</p>
-                  {:else}
-                    {#each filteredScores as result}
-                      <button
-                        class="search-result"
-                        onclick={() => selectSearchResult(result)}
-                      >
-                        <span
-                          ><strong>{result.title}</strong><small
-                            >{result.composer}</small
-                          ></span
-                        >
-                        <em>{result.source}</em>
-                      </button>
-                    {/each}
-                  {/if}
-                </div>
-              {/if}
-            </div>
-            <div class="song-list">
-              {#each songs as item, index}<button
-                  class:selected={selectedSong === index}
-                  class="song-item"
-                  onclick={() => selectSong(index)}
-                  ><span class="song-number">0{index + 1}</span><span
-                    class="song-copy"
-                    ><strong>{item.title}</strong><small
-                      >{item.composer} · {item.level}</small
-                    ></span
-                  ><span class="song-arrow">→</span></button
-                >{/each}
-            </div>
-            <div class="deck-section">
-              <div class="section-label">
-                <span>PLAYBACK</span><span class="mini-status"
-                  >{playbackStatus}</span
-                >
-              </div>
-              <div class="playback-buttons">
-                <button
-                  class:playing={isPlaying}
-                  class="play-control"
-                  onclick={togglePlay}
-                >
-                  <strong>{isPlaying ? "Pause" : "Play"}</strong>
-                </button>
-                <button
-                  class:active={replayOffset === 30}
-                  class="replay-button"
-                  onclick={() => replay(30)}>↶ <strong>30s</strong></button
-                >
-                <button
-                  class:active={replayOffset === 20}
-                  class="replay-button"
-                  onclick={() => replay(20)}>↶ <strong>20s</strong></button
-                >
-                <button
-                  class:active={replayOffset === 10}
-                  class="replay-button"
-                  onclick={() => replay(10)}>↶ <strong>10s</strong></button
-                >
-              </div>
-            </div>
-            <div class="deck-section recording-section">
-              <div class="section-label">
-                <span>RECORD PLAYING</span><span
-                  >{recording ? "RECORDING" : "LATEST TAKE"}</span
-                >
-              </div>
-              <button
-                class:recording
-                class="record-button"
-                onclick={toggleRecording}
-              >
-                <span class="record-dot"></span><strong
-                  >{recording ? "Stop recording" : "Record playing"}</strong
-                ><small
-                  >{recording
-                    ? "Capturing your performance"
-                    : "Ready for a new take"}</small
-                >
-              </button>
-              <div class="recording-scrubber">
-                <div class="scrubber-label">
-                  <span>Latest recording</span><span>{recordingProgress}%</span>
-                </div>
+              <div class="phone-search">
+                <label for="sheet-search">Search sheet music</label>
                 <input
-                  aria-label="Scrub latest recording"
-                  type="range"
-                  min="0"
-                  max="100"
-                  bind:value={recordingProgress}
+                  id="sheet-search"
+                  type="search"
+                  placeholder="Title or composer"
+                  bind:value={searchQuery}
                 />
+                {#if searchQuery.trim()}
+                  <div class="search-results">
+                    {#if filteredScores.length === 0}
+                      <p class="search-empty">
+                        Nothing matches. Try a composer's last name.
+                      </p>
+                    {:else}
+                      {#each filteredScores as result}
+                        <button
+                          class="search-result"
+                          onclick={() => selectSearchResult(result)}
+                        >
+                          <span
+                            ><strong>{result.title}</strong><small
+                              >{result.composer}</small
+                            ></span
+                          >
+                          <em>{result.source}</em>
+                        </button>
+                      {/each}
+                    {/if}
+                  </div>
+                {/if}
               </div>
-            </div>
-            <div class="deck-section">
-              <div class="section-label">
-                <span>ANNOTATION TOOLS</span><span>{annotationCount} marks</span
-                >
+              <div class="song-list">
+                {#each songs as item, index}<button
+                    class:selected={selectedSong === index}
+                    class="song-item"
+                    onclick={() => selectSong(index)}
+                    ><span class="song-copy"
+                      ><strong>{item.title}</strong><small
+                        >{item.composer}, {item.level.toLowerCase()}</small
+                      ></span
+                    >{#if selectedSong === index}<span class="song-state"
+                        >On the display</span
+                      >{/if}</button
+                  >{/each}
               </div>
-              <div class="annotation-tools">
-                <button class:active={annotationMode} onclick={toggleAnnotation}
-                  >✎ <span>Stylus</span></button
-                ><button class:active={isEraser} onclick={toggleEraser}
-                  >⌫ <span>Eraser</span></button
-                ><button onclick={() => addAnnotation("Circle")}
-                  >◯ <span>Circle</span></button
-                ><button onclick={() => addAnnotation("Star")}
-                  >★ <span>Star</span></button
-                ><button onclick={() => addAnnotation("Line")}
-                  >— <span>Line</span></button
-                >
+              <div class="app-section">
+                <div class="app-section-head">
+                  <h4>Playback</h4>
+                  <span>{playbackStatus}</span>
+                </div>
+                <div class="playback-buttons">
+                  <button
+                    class:playing={isPlaying}
+                    class="app-button play-control"
+                    onclick={togglePlay}
+                  >
+                    {isPlaying ? "Pause" : "Play"}
+                  </button>
+                  {#each [30, 20, 10] as seconds}
+                    <button
+                      class:active={replayOffset === seconds}
+                      class="app-button"
+                      aria-label={`Replay the last ${seconds} seconds`}
+                      onclick={() => replay(seconds)}
+                      ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                        ><path d={icons.replay} /></svg
+                      >{seconds}s</button
+                    >
+                  {/each}
+                </div>
               </div>
-              <div class="annotation-history">
+              <div class="app-section">
+                <div class="app-section-head">
+                  <h4>Record your playing</h4>
+                  <span>{recording ? "Recording" : "Latest take"}</span>
+                </div>
                 <button
-                  disabled={undoStack.length === 0}
-                  onclick={undoAnnotation}>↶ Undo</button
+                  class:recording
+                  class="record-button"
+                  onclick={toggleRecording}
                 >
-                <button
-                  disabled={redoStack.length === 0}
-                  onclick={redoAnnotation}>Redo ↷</button
-                >
+                  <span class="record-dot"></span><strong
+                    >{recording ? "Stop recording" : "Record playing"}</strong
+                  ><small
+                    >{recording
+                      ? "Capturing your performance"
+                      : "Ready for a new take"}</small
+                  >
+                </button>
+                <div class="recording-scrubber">
+                  <div class="scrubber-label">
+                    <span>Latest recording</span><span
+                      >{recordingProgress}%</span
+                    >
+                  </div>
+                  <input
+                    aria-label="Scrub latest recording"
+                    type="range"
+                    min="0"
+                    max="100"
+                    bind:value={recordingProgress}
+                  />
+                </div>
               </div>
-            </div>
-          {/if}
-        </div>
-      </aside>
-    </section>
-  </div>
+              <div class="app-section">
+                <div class="app-section-head">
+                  <h4>Annotation tools</h4>
+                  <span>{annotationCount} marks</span>
+                </div>
+                <div class="annotation-tools">
+                  <button
+                    class:active={annotationMode}
+                    class="app-button"
+                    onclick={toggleAnnotation}
+                    ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                      ><path d={icons.pen} /></svg
+                    >Stylus</button
+                  ><button
+                    class:active={isEraser}
+                    class="app-button"
+                    onclick={toggleEraser}
+                    ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                      ><path d={icons.eraser} /></svg
+                    >Eraser</button
+                  ><button
+                    class="app-button"
+                    onclick={() => addAnnotation("Circle")}
+                    ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                      ><path d={icons.circle} /></svg
+                    >Circle</button
+                  ><button
+                    class="app-button"
+                    onclick={() => addAnnotation("Star")}
+                    ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                      ><path d={icons.star} /></svg
+                    >Star</button
+                  ><button
+                    class="app-button"
+                    onclick={() => addAnnotation("Line")}
+                    ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                      ><path d={icons.line} /></svg
+                    >Line</button
+                  >
+                </div>
+                <div class="annotation-history">
+                  <button
+                    class="app-button"
+                    disabled={undoStack.length === 0}
+                    onclick={undoAnnotation}
+                    ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                      ><path d={icons.undo} /></svg
+                    >Undo</button
+                  >
+                  <button
+                    class="app-button"
+                    disabled={redoStack.length === 0}
+                    onclick={redoAnnotation}
+                    ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+                      ><path d={icons.redo} /></svg
+                    >Redo</button
+                  >
+                </div>
+              </div>
+            {/if}
+          </div>
+        </aside>
+      </section>
+    </div>
+  </section>
 
-  <footer class="app-footer">
-    <span>PROJECT 01</span><span>EVAN SOREEFAN</span><span
-      >SMART PIANO / v0.4</span
-    >
+  <footer class="colophon">
+    <p>
+      Smart Piano is a Project 1 prototype by Evan Soreefan, University of
+      Cincinnati.
+    </p>
   </footer>
 </main>
 
@@ -964,7 +1054,7 @@
       event.target === event.currentTarget && (showFeatureInfo = false)}
   >
     <div
-      class="modal feature-modal"
+      class="modal"
       role="dialog"
       aria-modal="true"
       aria-labelledby="feature-title"
@@ -972,9 +1062,12 @@
       <button
         class="modal-close"
         aria-label="Close feature details"
-        onclick={() => (showFeatureInfo = false)}>×</button
+        onclick={() => (showFeatureInfo = false)}
+        ><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"
+          ><path d={icons.close} /></svg
+        ></button
       >
-      <p class="eyebrow">FEATURE 0{selectedFeature}</p>
+      <span class="mark is-current">{selectedFeature}</span>
       <h2 id="feature-title">{features[selectedFeature - 1].name}</h2>
       <p class="feature-location">{features[selectedFeature - 1].location}</p>
       <p class="feature-description">

@@ -153,6 +153,8 @@
   let fallboardTransition = "";
   let fallboardTimer;
   let coffeeTableOpen = false;
+  let coffeeTableTransition = "";
+  let coffeeTableTimer;
   let bluetoothConnected = true;
   let recording = false;
   let recordingProgress = 68;
@@ -257,7 +259,12 @@
   }
 
   function toggleCoffeeTable() {
+    if (coffeeTableTransition) return;
     coffeeTableOpen = !coffeeTableOpen;
+    coffeeTableTransition = coffeeTableOpen ? "Pulling out…" : "Closing…";
+    coffeeTableTimer = setTimeout(() => {
+      coffeeTableTransition = "";
+    }, 3000);
     lastAction = coffeeTableOpen
       ? "Coffee table pulled out"
       : "Coffee table closed";
@@ -817,8 +824,9 @@
         <dl class="hub-status" aria-label="Smart Piano system status">
           <div>
             <dt>Coffee table</dt>
-            <dd class:status-off={!coffeeTableOpen}>
-              {coffeeTableOpen ? "Pulled out" : "Closed"}
+            <dd class:status-off={!coffeeTableTransition && !coffeeTableOpen}>
+              {coffeeTableTransition ||
+                (coffeeTableOpen ? "Pulled out" : "Closed")}
             </dd>
           </div>
           <div>

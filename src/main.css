@@ -128,10 +128,10 @@ button:disabled {
 
 .about {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: 280px minmax(0, 1fr);
   align-items: start;
   gap: clamp(24px, 4vw, 56px);
-  max-width: 900px;
+  max-width: 980px;
   padding-block: clamp(40px, 6vw, 72px);
 }
 
@@ -1137,7 +1137,7 @@ button:disabled {
   }
 
   .portrait {
-    width: 160px;
+    width: 220px;
   }
 
   .hub-keys {

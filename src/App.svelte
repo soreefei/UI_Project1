@@ -1048,10 +1048,7 @@
   </section>
 
   <footer class="colophon">
-    <p>
-      Smart Piano is a Project 1 prototype by Evan Soreefan, University of
-      Cincinnati.
-    </p>
+    <p>Project 1 | Prototype | Evan Soreefan | University of Cincinnati</p>
   </footer>
 </main>
 
